@@ -210,3 +210,8 @@ def logout(request):
     else:
         # 非get不接
         pass
+
+
+def get_user_info(request):
+    user = User.objects.get(id = 1)
+    return HttpResponse(user.head.url)
