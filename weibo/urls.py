@@ -3,5 +3,5 @@ from .views import *
 
 
 urlpatterns = [
-    url('^get_item_list', get_item_list)
+    url('^get_items_list', get_item_list)
 ]
