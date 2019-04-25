@@ -5,17 +5,20 @@ import json
 import datetime
 import logging
 import re
+import time
 
 logger = logging.getLogger('account.user')
 
 
-# '''
-# 返回值
-#     0:注册成功
-#     1：用户id重复
-#     2：邮箱已被注册
-# '''
+# 注册
 def to_register(user_id, user_name, password, email):
+    # TODO 添加注册UserWeiboInfo
+    """
+    返回值
+        0:注册成功
+        1：用户id重复
+        2：邮箱已被注册
+    """
     try:
         if User.objects.filter(username=user_id):
             logger.info('用户名重复')
@@ -31,15 +34,14 @@ def to_register(user_id, user_name, password, email):
         return 6, None
 
 
-# '''用于对密码进行MD5加密的函数'''
+# 用于对密码进行MD5加密的函数
 def sign_password_md5(passwd, salt='kHa4sDk3dhQf'):
     hashpwd_builder = hashlib.md5()         # 构建md5加密器
     hashpwd_builder.update((passwd+salt).encode())
     return hashpwd_builder.hexdigest()      # 返回加密结果
 
 
-# 用于安全的获取json内容
-# 保证获取到的json字典中包含args_list的内容
+# 用于安全的获取json内容 保证获取到的json字典中包含args_list的内容
 def get_json_dirt_safe(data_str, args_list=[]):
     # 读取post的内容
     # 使用try防止乱推出现异常崩溃
@@ -59,9 +61,12 @@ def get_json_dirt_safe(data_str, args_list=[]):
 
 
 # 检查dirt中各个元素是否有效
-# 若无效，则返回无效元素名称
-# 若全部有效，则返回空字符串
 def check_dirt_args_valid(json_dirt, args_list=[]):
+    """
+    检查dirt中各个元素是否有效
+    若无效，则返回无效元素名称
+    若全部有效，则返回空字符串
+    """
     for arg in args_list:
         if not json_dirt[arg]:
             return arg
@@ -69,13 +74,20 @@ def check_dirt_args_valid(json_dirt, args_list=[]):
 
 
 # 用于登录的函数
-# 登陆session结构：
-#     'user_id': user.username
 def to_login(request, response, user):
+    """
+    登陆session结构：
+    'user_id': user.username
+    'login_time': time.time()（时间戳）
+
+    登陆cookie结构：
+    'session_key': session_key
+    'username': user.username
+    """
     try:
         request.session['user_id'] = user.username
-        request.session['login_time'] = str(datetime.datetime.now())
-        response.set_cookie('user_id', user.username)
+        request.session['login_time'] = time.time()
+        response.set_cookie('username', user.username)
         # response.set_cookie('user_name', bytes(user.nickname, 'utf-8').decode("ISO-8859-1"))
         logger.info('登陆成功')
     except Exception:
@@ -96,6 +108,7 @@ def check_password_verify(password):
         return False
 
 
+# 检查用户ID格式是否合法
 def check_user_id_verify(user_id):
     if 5 < len(user_id) < 17:
         if re.match(r'^[A-Za-z1-9_]+$', user_id):
@@ -106,10 +119,12 @@ def check_user_id_verify(user_id):
         return False
 
 
+# 检查邮箱是否合法
 def check_email_verify(email):
     return re.match(r'^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$', email)
 
 
+# 检查昵称是否合法
 def check_nickname_verify(nickname):
     try:
         if 0 < len(nickname) < 21:
@@ -120,4 +135,19 @@ def check_nickname_verify(nickname):
         else:
             return False
     except Exception:
+        return False
+
+
+# 检查是否登陆
+def check_logged(request):
+    if 'username' in request.COOKIES:   # 检查username是否存在于COOKIE
+        if time.time()-request.COOKIES.get('login_time', 0) < 86400: # 检查登陆是否过期
+            # 检查登陆是否异常
+            if request.COOKIES.get('username') and request.COOKIES.get('username') == request.session.get('username', ''):
+                return True
+            else:
+                return False
+        else:
+            return False
+    else:
         return False

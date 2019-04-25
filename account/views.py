@@ -1,7 +1,8 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from ITstudioWeibo.general import check_verify_email
-from .account_lib import *
+from .models import UserWeiboInfo, User
+from .account_lib import check_password_verify, to_login, check_email_verify, to_register, sign_password_md5, check_logged
 import logging
 import json
 import random
@@ -11,7 +12,9 @@ import string
 logger = logging.getLogger('django.account.view')
 
 
+# 注册
 def register(request):
+    # TODO:添加随机的nick
     try:
         if request.method == 'POST':
             logger.info('收到post请求')
@@ -107,6 +110,7 @@ def register(request):
         return HttpResponse("{\"status\":6}", status=500)
 
 
+# 登陆
 def login(request):
     try:
         if request.method == 'POST':
@@ -146,7 +150,7 @@ def login(request):
                 if not post_body_json['password']:
                     # 无效的密码
                     logger.info('无效的密码')
-                    return HttpResponse("{\"result\":2}", status=400)
+                    return HttpResponse("{\"status\":2}", status=400)
 
                 # 查询用户，获取用户数据库对象
                 user = User.objects.filter(email=post_body_json['user_key'])
@@ -157,35 +161,35 @@ def login(request):
                     user = user[0]
                     if user.is_active:
                         if sign_password_md5(post_body_json['password']) == user.password:
-                            response = HttpResponse("{\"result\":0}", status=200)
+                            response = HttpResponse("{\"status\":0}", status=200)
                             to_login(request, response, user)
                             # 登录成功
                             return response
                         else:
                             # 密码错误
                             logger.info('密码错误')
-                            return HttpResponse("{\"result\":2}", status=200)
+                            return HttpResponse("{\"status\":2}", status=200)
                     else:
                         # active为Flase，账户被封禁
                         logger.info('账户被封禁')
-                        return HttpResponse("{\"result\":4}", status=403)
+                        return HttpResponse("{\"status\":4}", status=403)
                 else:
                     # 找不到用户，无效用户ID
                     logger.info('找不到用户：' + post_body_json['user_key'])
-                    return HttpResponse("{\"result\":1}", status=404)
+                    return HttpResponse("{\"status\":1}", status=404)
                 # else:
                 #     logger.info('post_body内容缺失')
                 #     return HttpResponse("{\"result\":8}", status=400)
             else:
                 logger.info('已登录，请勿重复登陆')
-                return HttpResponse("{\"result\":5}", status=403)
+                return HttpResponse("{\"status\":5}", status=403)
         else:
             # 非POST不接，返回404
             logger.info('app_login收到非post请求')
             return HttpResponse(status=404)
     except Exception:
         logger.error('出现未知错误')
-        return HttpResponse("{\"result\":6}", status=500)
+        return HttpResponse("{\"status\":6}", status=500)
 
 
 # 登出
@@ -209,6 +213,53 @@ def logout(request):
         pass
 
 
+# 获取用户信息
 def get_user_info(request):
-    user = User.objects.get(id = 1)
-    return HttpResponse(user.head.url)
+    if request.method == 'GET':
+        user_id = request.GET.get('user_id')
+        try:
+            user = User.objects.get(username=user_id)
+            user_info_db = UserWeiboInfo.objects.get(user_id = user.id)
+        except User.DoesNotExist:
+            return HttpResponse("{\"status\":1}", status=403)
+        response_data = {
+            "user_head": user.head.url,
+            "user_name": user.nick,
+            "follow_num": user_info_db.follow_num,
+            "fans_num": user_info_db.funs_num,
+            "status": 0
+        }
+        return HttpResponse(json.dumps(response_data))
+    else:
+        return HttpResponse(status=404)
+
+
+# 获取用户主页信息
+def get_user_home(request):
+    if request.method == 'GET':
+        if check_logged(request):
+            try:
+                user = User.objects.select_related('userweiboinfo').get(username=request.COOKIES.get('username'))
+            except:
+                return HttpResponse(status=500)
+            response_data = {
+                "user_head": user.head.url,
+                "user_name": user.nick,
+                "user_info": user.userweiboinfo.intro,
+                "follow_num": user.userweiboinfo.follow_num,
+                "weibo_num": user.userweiboinfo.weibo_num,
+                "fans_num": user.userweiboinfo.fans_num
+            }
+            try:
+                response_data = json.dumps(response_data)
+            except:
+                return HttpResponse(status=500)
+            # 正常返回结果
+            return HttpResponse(response_data)
+        else:
+            # 要求登陆
+            # todo 查询相关http代码
+            return HttpResponse(status=400)
+    else:
+        # 非GET不接
+        return HttpResponse(status=404)
