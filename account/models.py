@@ -13,8 +13,10 @@ class User(AbstractUser):
 
 
 class UserWeiboInfo(User):
-    user = models.OneToOneField(User, primary_key=True, on_delete=models.CASCADE, verbose_name=u'用户')
+    user = models.OneToOneField(User, to_field='username', primary_key=True, on_delete=models.CASCADE, verbose_name=u'用户')
     intro = models.CharField(max_length=180, verbose_name=u'介绍')
     follow_num = models.IntegerField(default=0, verbose_name=u'跟随数量')
+    following = models.ManyToManyField(User, verbose_name=u'关注的人')
     fans_num = models.IntegerField(default=0, verbose_name=u'喜欢的人')
     weibo_num = models.IntegerField(default=0, verbose_name=u'微博数量')
+

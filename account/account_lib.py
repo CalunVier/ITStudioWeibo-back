@@ -144,7 +144,12 @@ def check_logged(request):
         if time.time()-request.COOKIES.get('login_time', 0) < 86400: # 检查登陆是否过期
             # 检查登陆是否异常
             if request.COOKIES.get('username') and request.COOKIES.get('username') == request.session.get('username', ''):
-                return True
+                # 检查是否存在于数据库
+                user = User.objects.filter(username=request.COOKIES.get('username'))
+                if user:
+                    return True, user
+                else:
+                    return False
             else:
                 return False
         else:

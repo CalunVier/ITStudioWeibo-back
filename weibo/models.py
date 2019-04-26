@@ -14,11 +14,11 @@ class WeiboItem(models.Model):
         视频:
         media/weibo/vedio/2019.4.25/weibo_id/vedio.mp4
     """
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='作者')
+    author = models.ForeignKey('account.User', verbose_name='作者')
     create_time = models.DateTimeField(auto_now=True, verbose_name='发表时间')
     content = models.CharField(max_length=150, verbose_name='内容')
     super = models.ForeignKey('WeiboItem', on_delete=models.CASCADE, verbose_name='转发自微博')
-    type = models.IntegerField(default=0, verbose_name='微博类型')
+    contant_type = models.IntegerField(default=0, verbose_name='微博类型')
 
 
 class WeiboInfo(models.Model):

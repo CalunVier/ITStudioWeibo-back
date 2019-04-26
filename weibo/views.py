@@ -1,15 +1,66 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from account.account_lib import check_logged
+from account.models import User
+from ITstudioWeibo.calunvier_lib import page_of_queryset
+from .models import WeiboItem
+from .weibo_lib import weibo_list_process
+from django.db.models.query import QuerySet
 import json
+import pathlib
+import logging
+
+
+logger = logging.getLogger('django.weibo')
 
 
 def get_item_list(request):
-    if request.GET.get('page','1') == '1':
-        page1_d = {"page":1,"list":[{"type":"text","content":"第1条用于测试的静态微博","author_id":"2","author_name":"calunvier","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555684684.7214625,"following":False},		{"type":"image","content":"第2条用于测试的静态微博","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","imgs":["/media/default/default_head_img.jpg","/media/default/default_head_img.jpg"],"time":1555680684.7214625,"following":True},		{"type":"text","content":"第3条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555680684.7214625,"following":True},		{"type":"text","content":"第四条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555680684.7214625,"following":True},		{"type":"text","content":"第五条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555680684.7214625,"following":True},		{"type":"text","content":"第六条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555680684.7214625,"following":True},		{"type":"text","content":"第七条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555680684.7214625,"following":True},		{"type":"text","content":"第八条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555680684.7214625,"following":True},		{"type":"text","content":"第九条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555680684.7214625,"following":True},		{"type":"text","content":"第十条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555680684.7214625,"following":True}],"status":1}
-        return HttpResponse(json.dumps(page1_d))
-    if request.GET.get('page', '1') == '2':
-        page2_d = {"page":1,"list":[{"type":"text","content":"第11条用于测试的静态微博","author_id":"2","author_name":"calunvier","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555604684.7214625,"following":False},{"type":"image","content":"第12条用于测试的静态微博","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","imgs":["/media/default/default_head_img.jpg","/media/default/default_head_img.jpg"],"time":1555680684.7214625,"following":True},{"type":"text","content":"第13条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555604684.7214625,"following":True},{"type":"text","content":"第1四条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555604684.7214625,"following":True},{"type":"text","content":"第1五条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555604684.7214625,"following":True},{"type":"text","content":"第1六条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555604684.7214625,"following":True},{"type":"text","content":"第1七条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555604684.7214625,"following":True},{"type":"text","content":"第1八条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555604684.7214625,"following":True},{"type":"text","content":"第1九条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555604684.7214625,"following":True},{"type":"text","content":"第1十条","author_id":"1","author_name":"haha","author_head":"/media/default/default_head_img.jpg","forward_num":"10","comment_num":"123","like_num":"1234","time":1555604684.7214625,"following":True}],"status":1}
-        return HttpResponse(json.dumps(page2_d))
+    """
+    :status :
+        0:正常
+        2:要求登陆
+    """
+    logger.debug('get_item_list()')
+    if request.method == 'GET':
+        logger.debug('收到post请求')
+
+        # 读取request Query
+        page = request.GET.get('page', 1)
+        try:
+            page = int(page)
+        except:
+            page = 1
+        tag = request.GET.get('tag', 'follow')
+
+        # 检索数据库
+        if tag == 'follow':
+            logged, user = check_logged(request)
+            if logged:
+                # todo 优化数据库
+                followings = user.userweiboinfo_set.all()
+                weibo_db = WeiboItem.objects.none()
+                if followings:
+                    for author_info in followings:
+                        weibo_db = weibo_db | WeiboItem.objects.filter(author=author_info.user)
+            else:
+                # todo 查询要求登陆的http状态码
+                return HttpResponse(json.dumps({'status': 2}), status=400)
+        elif tag == 'video':
+            weibo_db = WeiboItem.objects.filter(contant_type=2)
+        else:
+            weibo_db = WeiboItem.objects.all().order_by('-weiboinfo__like_num')
+
+        # 分页
+        weibo_db = page_of_queryset(weibo_db, page=page, num=10)
+
+        # 循环处理数据库中的数据
+        response_data = weibo_list_process(request, weibo_db, page)
+
+        # 处理完毕返回列表
+        return HttpResponse(response_data, status=200)
+    else:
+        # 非POST不接
+        return HttpResponse(status=404)
 
 
 
