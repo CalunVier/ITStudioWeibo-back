@@ -8,7 +8,7 @@ def weibo_list_process(request, weibo_db, page):
     weibo_list_response_date = []
     for item in weibo_db:
         item_data = {
-            "type": 'text' if item.type == 0 else 'image' if item.type == 1 else 'video',
+            "type": 'text' if item.contant_type == 0 else 'image' if item.contant_type == 1 else 'video',
             "content": item.content,
             "author_id": item.author.username,
             "author_name": item.author.nick,
@@ -35,7 +35,7 @@ def weibo_list_process(request, weibo_db, page):
             item_data['following'] = False
 
         # 处理视频和图片
-        if item.type == 1:  # img
+        if item.contant_type == 1:  # img
             imgs_path = pathlib.Path(
                 r'./media/weibo/pictures/{0}.{1}.{2}/{3}'.format(item.create_time.year, item.create_time.month,
                                                                  item.create_time.day, item.id))
@@ -43,7 +43,7 @@ def weibo_list_process(request, weibo_db, page):
             for img in imgs_path.iterdir():
                 imgs_list.append(img.as_posix())
             item_data['imgs'] = imgs_list
-        elif item.type == 2:  # video
+        elif item.contant_type == 2:  # video
             video_path = pathlib.Path(
                 r'./media/weibo/video/{0}.{1}.{2}/{3}'.format(item.create_time.year, item.create_time.month,
                                                               item.create_time.day, item.id))
