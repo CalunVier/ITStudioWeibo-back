@@ -26,7 +26,7 @@ def to_register(user_id, user_name, password, email):
         if User.objects.filter(email=email):
             logger.info('邮箱重复')
             return 2, None
-        user = User(username=user_id, password=password, email=email)
+        user = User(username=user_id, password=password, email=email, nick=user_name)
         user.save()
         return 0, user
     except Exception:

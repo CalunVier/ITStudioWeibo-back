@@ -42,6 +42,5 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         super(User, self).save()
-        info = UserWeiboInfo.objects.filter(user=self)
-        if not info:
+        if not self.id:
             UserWeiboInfo(user=self).save()

@@ -30,8 +30,7 @@ class WeiboItem(models.Model):
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
         super(WeiboItem, self).save()
-        info = WeiboInfo.objects.filter(weibo=self)
-        if not info:
+        if not self.id:
             WeiboInfo(weibo=self).save()
 
 
