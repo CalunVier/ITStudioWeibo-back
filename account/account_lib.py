@@ -6,6 +6,7 @@ import datetime
 import logging
 import re
 import time
+from django.contrib.auth.hashers import is_password_usable
 
 logger = logging.getLogger('account.user')
 
@@ -74,10 +75,10 @@ def check_dirt_args_valid(json_dirt, args_list=[]):
 
 
 # 用于登录的函数
-def to_login(request, response, user):
+def set_login_cookie(request, response, user):
     """
     登陆session结构：
-    'user_id': user.username
+    'username': user.username
     'login_time': time.time()（时间戳）
 
     登陆cookie结构：
@@ -85,7 +86,7 @@ def to_login(request, response, user):
     'username': user.username
     """
     try:
-        request.session['user_id'] = user.username
+        request.session['username'] = user.username
         request.session['login_time'] = time.time()
         response.set_cookie('username', user.username)
         # response.set_cookie('user_name', bytes(user.nickname, 'utf-8').decode("ISO-8859-1"))
@@ -96,15 +97,18 @@ def to_login(request, response, user):
 
 # 检查密码是否合法
 def check_password_verify(password):
-    # 检查长度合法性
-    if 5 < len(password) < 17:
-        for c in password:
-            if not 32 < ord(c) < 127:
-                logger.info('密码含有违规字符')
-                return False
-        return True
-    else:   # 长度不合法
-        logger.info('密码长度不合法')
+    if not is_password_usable(password):
+        # 检查长度合法性
+        if 5 < len(password) < 17:
+            for c in password:
+                if not 32 < ord(c) < 127:
+                    logger.info('密码含有违规字符')
+                    return False
+            return True
+        else:   # 长度不合法
+            logger.info('密码长度不合法')
+            return False
+    else:
         return False
 
 

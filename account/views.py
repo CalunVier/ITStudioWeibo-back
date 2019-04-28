@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from ITstudioWeibo.general import check_verify_email
 from .models import UserWeiboInfo, User
-from .account_lib import check_password_verify, to_login, check_email_verify, to_register, sign_password_md5, check_logged
+from .account_lib import check_password_verify, set_login_cookie, check_email_verify, to_register, sign_password_md5, check_logged
 import logging
 import json
 import random
@@ -75,19 +75,12 @@ def register(request):
                     # 写入数据库
                     logger.info('将注册信息写入数据库')
                     result, user = to_register(post_body_json['username'], post_body_json['username'],
-                                               sign_password_md5(post_body_json['password']), post_body_json['email'])
+                                               post_body_json['password'], post_body_json['email'])
                     # 返回结果
                     if not result:
                         # 注册成功
                         logger.info('返回注册成功')
-                        response = HttpResponse("{\"status\":0}", status=200)
-                        # 注册后自动登陆
-                        try:
-                            to_login(request, response, user)
-                            logger.info('自动登陆完成')
-                        except Exception:
-                            logger.error('自动登陆出现异常')
-                        return response
+                        return HttpResponse("{\"status\":0}", status=200)
                     else:
                         # 注册失败返回状态码
                         logger.error('注册失败返回状态码')
@@ -117,7 +110,7 @@ def login(request):
             logger.info("收到POST请求")
 
             # 判断是否登陆
-            if 'user_id' not in request.session:
+            if 'username' not in request.session:
                 # 读取post的内容
                 # try:    # 使用try防止乱推出现异常崩溃
                 #     post_body_json = json.loads(request.body)
@@ -160,9 +153,9 @@ def login(request):
                     logger.info('检索到用户'+post_body_json['user_key'])
                     user = user[0]
                     if user.is_active:
-                        if sign_password_md5(post_body_json['password']) == user.password:
+                        if user.check_password(post_body_json['password']):
                             response = HttpResponse("{\"status\":0}", status=200)
-                            to_login(request, response, user)
+                            set_login_cookie(request, response, user)
                             # 登录成功
                             return response
                         else:
