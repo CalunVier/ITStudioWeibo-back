@@ -3,8 +3,19 @@ from django.contrib.auth.models import AbstractUser
 
 
 class User(AbstractUser):
+    """
+    :sex
+        0：未设置
+        1；男
+        2：女
+        3：其他
+    """
     head = models.ImageField(verbose_name=u'头像', default='default/default_head_img.jpg', upload_to='upload/%Y/%m')
     nick = models.CharField(verbose_name=u'昵称', max_length=16)
+    sex = models.IntegerField(default=0, verbose_name=u'性别')
+    birth = models.DateTimeField(null=True, blank=True, verbose_name=u'生日')
+    school = models.CharField(max_length=128, null=True, blank=True, verbose_name=u'学校')
+
 
     class Meta:
         indexes = [

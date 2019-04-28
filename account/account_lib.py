@@ -149,10 +149,10 @@ def check_logged(request):
                 if user:
                     return True, user
                 else:
-                    return False
+                    return None
             else:
-                return False
+                return None
         else:
-            return False
+            return None
     else:
-        return False
+        return None

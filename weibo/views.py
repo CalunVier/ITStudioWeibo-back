@@ -30,12 +30,12 @@ def get_item_list(request):
             page = int(page)
         except:
             page = 1
-        tag = request.GET.get('tag', 'follow')
+        tag = request.GET.get('tag', 'hot')
 
         # 检索数据库
         if tag == 'follow':
-            logged, user = check_logged(request)
-            if logged:
+            user = check_logged(request)
+            if user:
                 # todo 优化数据库
                 followings = user.userweiboinfo_set.all()
                 weibo_db = WeiboItem.objects.none()
