@@ -1,14 +1,14 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from ITstudioWeibo.general import check_verify_email
 from .models import UserWeiboInfo, User
 from .account_lib import check_password_verify, set_login_cookie, check_email_verify, to_register, sign_password_md5, check_logged
+from ITstudioWeibo.general import check_email_verify_code_not_right
 import logging
 import json
 import random
 import string
 
-
+# todo 解决删除用户再注册的问题
 logger = logging.getLogger('django.account.view')
 
 
@@ -48,52 +48,39 @@ def register(request):
             }
 
             # post判断post_body是否存在所需内容
-            if post_body_json and \
-                    'email' in post_body_json and \
-                    'password' in post_body_json and \
-                    'verify_code' in post_body_json:
-                logger.info('POST数据完整')
+            if not check_email_verify(post_body_json['email']):
+                logger.info('邮箱格式不合法')
+                return HttpResponse("{\"status\":10}", status=400)
 
-                # 检查验证码是否正确
-                # TODO: 验证码系统待添加
-                if True:
-                    # logger.debug('验证码检查通过')
-                    if not post_body_json['email']:
-                        logger.info('空email')
-                        return HttpResponse("{\"status\":10}", status=400)  # 无效的email
-                    if not post_body_json['password']:
-                        logger.info('空密码')
-                        return HttpResponse("{\"status\":5}", status=400)
+            # 检查验证码是否正确
+            if not check_email_verify_code_not_right(post_body_json['email'], post_body_json['verify_code']):
+                # logger.debug('验证码检查通过')
+                if not post_body_json['password']:
+                    logger.info('空密码')
+                    return HttpResponse("{\"status\":5}", status=400)
 
-                    if not check_password_verify(post_body_json['password']):
-                        logger.info('密码不合法')
-                        return HttpResponse("{\"status\":5}", status=403)
-                    if not check_email_verify(post_body_json['email']):
-                        logger.info('邮箱格式不合法')
-                        return HttpResponse("{\"status\":10}", status=400)
+                if not check_password_verify(post_body_json['password']):
+                    logger.info('密码不合法')
+                    return HttpResponse("{\"status\":5}", status=403)
 
-                    # 写入数据库
-                    logger.info('将注册信息写入数据库')
-                    result, user = to_register(post_body_json['username'], post_body_json['username'],
-                                               post_body_json['password'], post_body_json['email'])
-                    # 返回结果
-                    if not result:
-                        # 注册成功
-                        logger.info('返回注册成功')
-                        return HttpResponse("{\"status\":0}", status=200)
-                    else:
-                        # 注册失败返回状态码
-                        logger.error('注册失败返回状态码')
-                        return HttpResponse("{\"status\":" + str(result) + "}", status=406)
+                # 写入数据库
+                logger.info('将注册信息写入数据库')
+                result, user = to_register(post_body_json['username'], post_body_json['username'],
+                                           post_body_json['password'], post_body_json['email'])
+                # 返回结果
+                if not result:
+                    # 注册成功
+                    logger.info('返回注册成功')
+                    return HttpResponse("{\"status\":0}", status=200)
+                else:
+                    # 注册失败返回状态码
+                    logger.error('注册失败返回状态码')
+                    return HttpResponse("{\"status\":" + str(result) + "}", status=406)
 
-                # else:
-                #     # 验证码错误，返回状态码
-                #     logger.info('验证码错误')
-                #     return HttpResponse("{\"result\":3}", status=403)
             else:
-                # post数据不完整，返回状态码
-                logger.info('注册数据不完整')
-                return HttpResponse("{\"status\":8}", status=400)
+                # 验证码错误，返回状态码
+                logger.info('验证码错误')
+                return HttpResponse("{\"result\":3}", status=403)
         else:
             # 非post请求，404
             logger.info('收到非POST请求')

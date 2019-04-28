@@ -10,7 +10,7 @@ import logging
 logger = logging.getLogger('django.general')
 
 
-def check_verify_email(verify_id, verify_code):
+def check_email_verify_code_not_right(verify_id, verify_code):
     vc = cache.get(verify_id, {})
     if vc:
         if verify_code == vc['code']:

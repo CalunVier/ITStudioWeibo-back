@@ -17,9 +17,11 @@ from django.conf.urls import url, include
 from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
+from .general import i_get_email_verify_code
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^account/', include('account.urls', namespace='Account')),
-    url(r'^weibo/', include('weibo.urls', namespace='Weibo'))
+    url(r'^weibo/', include('weibo.urls', namespace='Weibo')),
+    url(r'^get_email_verify_code', i_get_email_verify_code)
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

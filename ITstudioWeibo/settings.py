@@ -123,3 +123,9 @@ STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 AUTH_USER_MODEL = 'account.User'
+
+SESSION_COOKIE_AGE = 86400
+
+EMAIL_HOST = 'smtp.163.com'
+EMAIL_HOST_USER = 'itstudiomtimea@163.com'
+EMAIL_HOST_PASSWORD = 'itstudio1234'
