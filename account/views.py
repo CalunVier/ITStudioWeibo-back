@@ -245,10 +245,10 @@ def get_user_home(request):
             response_data = {
                 "user_head": user.head.url,
                 "user_name": user.nick,
-                "user_info": user.userweiboinfo.intro,
-                "follow_num": user.userweiboinfo.follow_num,
-                "weibo_num": user.userweiboinfo.weibo_num,
-                "fans_num": user.userweiboinfo.fans_num
+                "user_info": user.intro,
+                "follow_num": user.user_info.follow_num,
+                "weibo_num": user.user_info.weibo_num,
+                "fans_num": user.user_info.fans_num
             }
             try:
                 response_data = json.dumps(response_data)

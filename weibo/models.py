@@ -2,6 +2,13 @@ from django.db import models
 from django.conf import settings
 
 
+class WeiboInfo(models.Model):
+    weibo = models.OneToOneField('weibo.WeiboItem',related_name='weiboinfo', verbose_name=u'微博')
+    forward_num = models.IntegerField(default=0, verbose_name=u'转发量')
+    comment_num = models.IntegerField(default=0, verbose_name=u'评论量')
+    like_num = models.IntegerField(default=0, verbose_name=u'点赞数量')
+
+
 class WeiboItem(models.Model):
     """
     :type
@@ -18,14 +25,14 @@ class WeiboItem(models.Model):
     create_time = models.DateTimeField(auto_now=True, verbose_name='发表时间')
     content = models.CharField(max_length=150, verbose_name='内容')
     super = models.ForeignKey('WeiboItem', null=True, blank=True, on_delete=models.CASCADE, verbose_name='转发自微博')
-    contant_type = models.IntegerField(default=0, verbose_name='微博类型')
+    content_type = models.IntegerField(default=0, verbose_name='微博类型')
 
-
-class WeiboInfo(models.Model):
-    weibo = models.OneToOneField(WeiboItem,related_name='weiboinfo', verbose_name=u'微博')
-    forward_num = models.IntegerField(default=0, verbose_name=u'转发量')
-    comment_num = models.IntegerField(default=0, verbose_name=u'评论量')
-    like_num = models.IntegerField(default=0, verbose_name=u'点赞数量')
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        super(WeiboItem, self).save()
+        info = WeiboInfo.objects.filter(weibo=self)
+        if not info:
+            WeiboInfo(weibo=self).save()
 
 
 class WeiboComment(models.Model):
