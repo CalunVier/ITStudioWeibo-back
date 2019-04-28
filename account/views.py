@@ -74,7 +74,7 @@ def register(request):
 
                     # 写入数据库
                     logger.info('将注册信息写入数据库')
-                    result, user = to_register(post_body_json['user_id'],
+                    result, user = to_register(post_body_json['username'], post_body_json['username'],
                                                sign_password_md5(post_body_json['password']), post_body_json['email'])
                     # 返回结果
                     if not result:
@@ -91,7 +91,7 @@ def register(request):
                     else:
                         # 注册失败返回状态码
                         logger.error('注册失败返回状态码')
-                        return HttpResponse("{\"status\":" + str(result) + "}}", status=406)
+                        return HttpResponse("{\"status\":" + str(result) + "}", status=406)
 
                 # else:
                 #     # 验证码错误，返回状态码

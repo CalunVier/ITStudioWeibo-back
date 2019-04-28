@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-
+from django.contrib.auth.hashers import is_password_usable
 
 class UserWeiboInfo(models.Model):
     """
@@ -41,6 +41,8 @@ class User(AbstractUser):
         ]
 
     def save(self, *args, **kwargs):
+        if not is_password_usable(self.password):
+            self.set_password(self.password)
         super(User, self).save()
         if not self.id:
             UserWeiboInfo(user=self).save()

@@ -11,7 +11,7 @@ logger = logging.getLogger('account.user')
 
 
 # 注册
-def to_register(user_id, user_name, password, email):
+def to_register(username, nick, password, email):
     # TODO 添加注册UserWeiboInfo
     """
     返回值
@@ -20,13 +20,13 @@ def to_register(user_id, user_name, password, email):
         2：邮箱已被注册
     """
     try:
-        if User.objects.filter(username=user_id):
+        if User.objects.filter(username=username):
             logger.info('用户名重复')
             return 1, None
         if User.objects.filter(email=email):
             logger.info('邮箱重复')
             return 2, None
-        user = User(username=user_id, password=password, email=email, nick=user_name)
+        user = User(username=username, password=password, email=email, nick=nick)
         user.save()
         return 0, user
     except Exception:
