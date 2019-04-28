@@ -147,7 +147,11 @@ def check_logged(request):
                 # 检查是否存在于数据库
                 user = User.objects.filter(username=request.COOKIES.get('username'))
                 if user:
-                    return True, user
+                    # 检查用户是否为active
+                    if user[0].is_active:
+                        return True, user[0]
+                    else:
+                        return None
                 else:
                     return None
             else:

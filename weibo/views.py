@@ -30,6 +30,12 @@ def get_item_list(request):
             page = int(page)
         except:
             page = 1
+        num = request.GET.get('num', 10)
+        try:
+            num = int(num)
+        except:
+            num = 10
+
         tag = request.GET.get('tag', 'hot')
 
         # 检索数据库
@@ -51,7 +57,7 @@ def get_item_list(request):
             weibo_db = WeiboItem.objects.all().order_by('-weiboinfo__like_num')
 
         # 分页
-        weibo_db = page_of_queryset(weibo_db, page=page, num=10)
+        weibo_db = page_of_queryset(weibo_db, page=page, num=num)
 
         # 循环处理数据库中的数据
         response_data = weibo_list_process(request, weibo_db, page)
