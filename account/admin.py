@@ -2,9 +2,6 @@ from django.contrib import admin
 from .models import User, UserWeiboInfo
 
 
-admin.site.disable_action('delete_selected')
-
-
 class UserAdmin(admin.ModelAdmin):
     list_display = ['id', 'user_name', 'email', 'nick', 'is_active', 'user_info_weibo_num', 'user_info_funs_num']
     actions = ['de_active_user', 'to_active_user']
