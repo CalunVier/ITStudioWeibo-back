@@ -48,7 +48,7 @@ def register(request):
             }
 
             # post判断post_body是否存在所需内容
-            if not check_email_verify(post_body_json['email']):
+            if True or not check_email_verify(post_body_json['email']):
                 logger.info('邮箱格式不合法')
                 return HttpResponse("{\"status\":10}", status=400)
 
