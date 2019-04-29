@@ -43,6 +43,8 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         if not is_password_usable(self.password):
             self.set_password(self.password)
-        super(User, self).save()
         if not self.id:
+            super(User, self).save()
             UserWeiboInfo(user=self).save()
+        else:
+            super(User, self).save()

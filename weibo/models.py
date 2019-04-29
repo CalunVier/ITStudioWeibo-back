@@ -29,9 +29,11 @@ class WeiboItem(models.Model):
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
-        super(WeiboItem, self).save()
         if not self.id:
+            super(WeiboItem, self).save()
             WeiboInfo(weibo=self).save()
+        else:
+            super(WeiboItem, self).save()
 
 
 class WeiboComment(models.Model):
