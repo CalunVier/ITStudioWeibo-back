@@ -128,4 +128,4 @@ SESSION_COOKIE_AGE = 86400
 
 EMAIL_HOST = 'smtp.163.com'
 EMAIL_HOST_USER = 'itstudiomtimea@163.com'
-EMAIL_HOST_PASSWORD = 'itstudio1234'
+EMAIL_HOST_PASSWORD = 'itstudio123'

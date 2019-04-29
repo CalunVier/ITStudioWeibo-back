@@ -52,7 +52,7 @@ def get_item_list(request):
                 # todo 查询要求登陆的http状态码
                 return HttpResponse(json.dumps({'status': 2}), status=400)
         elif tag == 'video':
-            weibo_db = WeiboItem.objects.filter(contant_type=2)
+            weibo_db = WeiboItem.objects.filter(content_type=2)
         else:
             weibo_db = WeiboItem.objects.all().order_by('-weiboinfo__like_num')
 
