@@ -141,7 +141,7 @@ def login(request):
                     user = user[0]
                     if user.is_active:
                         if user.check_password(post_body_json['password']):
-                            response = HttpResponse("{\"status\":0}", status=200)
+                            response = HttpResponse("{\"user_id\":\"%s\",\"status\":0}" % user.username, status=200)
                             set_login_cookie(request, response, user)
                             # 登录成功
                             return response
