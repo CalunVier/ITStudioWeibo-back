@@ -8,7 +8,7 @@ import re
 import time
 from django.contrib.auth.hashers import is_password_usable
 
-logger = logging.getLogger('account.user')
+logger = logging.getLogger('my_logger.account.lib')
 
 
 # 注册

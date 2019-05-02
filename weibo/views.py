@@ -11,7 +11,7 @@ import pathlib
 import logging
 
 
-logger = logging.getLogger('django.weibo')
+logger = logging.getLogger('my_logger.weibo.view')
 
 
 def get_item_list(request):

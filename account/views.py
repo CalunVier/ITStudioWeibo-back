@@ -9,7 +9,7 @@ import random
 import string
 
 # todo 解决删除用户再注册的问题
-logger = logging.getLogger('django.account.view')
+logger = logging.getLogger('my_logger.account.view')
 
 
 # 注册
@@ -27,7 +27,7 @@ def register(request):
     """
     try:
         if request.method == 'POST':
-            logger.info('收到post请求')
+            logger.debug('收到post请求')
 
             # 随机生成用户名
             while True:
