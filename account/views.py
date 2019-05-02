@@ -14,23 +14,20 @@ logger = logging.getLogger('django.account.view')
 
 # 注册
 def register(request):
-    # TODO:添加随机的nick
+    """
+    返回及status状态返回说明
+    接收到POST请求时：
+        0: 注册成功
+        1：用户ID重复(失效)
+        2：邮箱重复
+        3:验证码错误
+        5：无效的密码
+        10：无效的邮箱
+    非POST请求不做处理，返回HTTP状态404
+    """
     try:
         if request.method == 'POST':
             logger.info('收到post请求')
-            # 读取post的内容
-            # 使用try防止乱推出现异常崩溃
-            # try:
-            #     post_body_json = json.loads(request.body)
-            #     logger.debug('json解析成功')
-            # except json.JSONDecodeError:
-            #     post_body_json = {}
-            #     logger.error('json解析失败，收到POST:' + str(request.body))
-            #     return HttpResponse("{\"result\":9}", status=400)
-            # except Exception:
-            #     post_body_json = {}
-            #     logger.error('json解析出现未知错误，收到POST:' + str(request.body))
-            #     return HttpResponse("{\"result\":9}", status=400)
 
             # 随机生成用户名
             while True:
@@ -92,35 +89,27 @@ def register(request):
 
 # 登陆
 def login(request):
+    """
+    返回及status状态说明
+        0:登陆成功
+        1：无效的用户索引
+        2：无效的密码
+        4：账户被禁止登陆
+        5：已登录（请勿重复登陆）
+        6：未知错误
+    非POST请求不做处理，返回HTTP状态404
+    """
     try:
         if request.method == 'POST':
             logger.info("收到POST请求")
 
             # 判断是否登陆
             if 'username' not in request.session:
-                # 读取post的内容
-                # try:    # 使用try防止乱推出现异常崩溃
-                #     post_body_json = json.loads(request.body)
-                #     logger.info('解析json成功')
-                # except json.JSONDecodeError:
-                #     logger.error('json解析错误:' + str(request.body))
-                #     post_body_json = {}
-                #     return HttpResponse("{\"result\":9}", status=400)
-                # except Exception:
-                #     logger.error('json解析出现未知错误:' + str(request.body))
-                #     post_body_json = {}
-                #     return HttpResponse("{\"result\":9}", status=400)
-
                 # 为兼容旧代码，构建post_body_json
                 post_body_json = {
                     'user_key': request.POST.get('email', ''),
                     'password': request.POST.get('password', '')
                 }
-
-                # post判断post_body是否存在所需内容
-                # if post_body_json and "user_key" in post_body_json and \
-                #         'password' in post_body_json:
-                #     logger.debug('post数据完整')
 
                 # 检查各项是否为空
                 if not check_email_verify(post_body_json['user_key']):
@@ -157,15 +146,12 @@ def login(request):
                     # 找不到用户，无效用户ID
                     logger.info('找不到用户：' + post_body_json['user_key'])
                     return HttpResponse("{\"status\":1}", status=404)
-                # else:
-                #     logger.info('post_body内容缺失')
-                #     return HttpResponse("{\"result\":8}", status=400)
             else:
                 logger.info('已登录，请勿重复登陆')
                 return HttpResponse("{\"status\":5}", status=403)
         else:
             # 非POST不接，返回404
-            logger.info('app_login收到非post请求')
+            logger.info('收到非post请求')
             return HttpResponse(status=404)
     except Exception:
         logger.error('出现未知错误')
@@ -179,6 +165,7 @@ def logout(request):
             logger.info(request.session['user_id']+'退出登录')
             request.session.flush()
             response = HttpResponse("{\"status\":\"ok\"}")
+            # todo 登出函数等待适配
             try:
                 response.delete_cookie('sessionid')
                 response.delete_cookie('user_id')
@@ -214,21 +201,29 @@ def get_user_info(request):
         return HttpResponse(status=404)
 
 
-# 获取用户主页信息
+# 获取用户主页信息（个人中心）
 def get_user_home(request):
+    """
+    返回及status状态说明
+        0:正常
+        1：未知用户
+        2：未登录
+    对于非GET请求不做处理，返回Http状态404
+    """
     if request.method == 'GET':
         if check_logged(request):
             try:
                 user = User.objects.select_related('userweiboinfo').get(username=request.COOKIES.get('username'))
             except:
-                return HttpResponse(status=500)
+                return HttpResponse("{\"status\":1}",status=404)
             response_data = {
-                "user_head": user.head.url,
-                "user_name": user.nick,
-                "user_info": user.intro,
-                "follow_num": user.user_info.follow_num,
-                "weibo_num": user.user_info.weibo_num,
-                "fans_num": user.user_info.fans_num
+                "user_head": user.head.url,     # 头像
+                "user_name": user.nick,         # 用户昵称
+                "user_info": user.intro,        # 用户简介
+                "follow_num": user.user_info.follow_num,    # follow数量
+                "weibo_num": user.user_info.weibo_num,      # 微博数量
+                "fans_num": user.user_info.fans_num,         # 粉丝数量
+                "status": 0
             }
             try:
                 response_data = json.dumps(response_data)
@@ -238,8 +233,7 @@ def get_user_home(request):
             return HttpResponse(response_data)
         else:
             # 要求登陆
-            # todo 查询相关http代码
-            return HttpResponse(status=400)
+            return HttpResponse("{\"status\":2}", status=401)
     else:
         # 非GET不接
         return HttpResponse(status=404)

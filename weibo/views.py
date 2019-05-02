@@ -4,7 +4,7 @@ from account.account_lib import check_logged
 from account.models import User
 from ITstudioWeibo.calunvier_lib import page_of_queryset
 from .models import WeiboItem
-from .weibo_lib import weibo_list_process
+from .weibo_lib import weibo_list_process_to_str
 from django.db.models.query import QuerySet
 import json
 import pathlib
@@ -60,7 +60,7 @@ def get_item_list(request):
         weibo_db = page_of_queryset(weibo_db, page=page, num=num)
 
         # 循环处理数据库中的数据
-        response_data = weibo_list_process(request, weibo_db, page)
+        response_data = weibo_list_process_to_str(request, weibo_db, page)
 
         # 处理完毕返回列表
         return HttpResponse(response_data, status=200)

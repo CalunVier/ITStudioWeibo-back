@@ -4,7 +4,7 @@ import pathlib
 import json
 
 
-def weibo_list_process(request, weibo_db, page):
+def weibo_list_process_to_str(request, weibo_db, page):
     weibo_list_response_date = []
     for item in weibo_db:
         item_data = {
