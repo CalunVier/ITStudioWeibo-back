@@ -45,12 +45,12 @@ def register(request):
             }
 
             # post判断post_body是否存在所需内容
-            if True or not check_email_verify(post_body_json['email']):
+            if not check_email_verify(post_body_json['email']):
                 logger.info('邮箱格式不合法')
                 return HttpResponse("{\"status\":10}", status=400)
 
             # 检查验证码是否正确
-            if not check_email_verify_code_not_right(post_body_json['email'], post_body_json['verify_code']):
+            if True or not check_email_verify_code_not_right(post_body_json['email'], post_body_json['verify_code']):
                 # logger.debug('验证码检查通过')
                 if not post_body_json['password']:
                     logger.info('空密码')

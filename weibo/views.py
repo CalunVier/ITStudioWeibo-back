@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from account.account_lib import check_logged
 from account.models import User
 from ITstudioWeibo.calunvier_lib import page_of_queryset
-from .models import WeiboItem
+from .models import WeiboItem, WeiboImages
 from .weibo_lib import weibo_list_process_to_str
 from django.db.models.query import QuerySet
 import json
@@ -69,4 +69,19 @@ def get_item_list(request):
         return HttpResponse(status=404)
 
 
+def create_weibo(request, content, user, content_type=0, imgs_id=None, video_id=None, super=None):
+    weibo = WeiboItem(author=user, super=super, content=content, content_type=content_type)
+    user.user_info.weibo_num += 1
+    user.user_info.save()
+    if content_type == 1:
+        if imgs_id:
+            imgs_db = WeiboImages.objects.none()
+            for img_id in imgs_id:
+                try:
+                    imgs_db = imgs_db | WeiboImages.objects.get(image_id=imgs_id)
+                except:
+                    pass
+            if imgs_db:
+                pass
+            # todo 未完待续
 
