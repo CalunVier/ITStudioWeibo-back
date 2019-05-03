@@ -69,7 +69,6 @@ def get_item_list(request):
 
 
 def create_weibo(request):
-    # todo 未完待续
     content = request.GET.get('content', '')
     pictures = request.GET.get('picture', '[]')
     super_weibo_id = request.GET.get('super', '')
@@ -104,3 +103,34 @@ def create_weibo(request):
         # 在微博内容为纯文本的情况下没有内容
         return HttpResponse('{\"status\":4}')
     return to_create_weibo(content=content, user=user, content_type=content_type, imgs_id=pictures, video_id=video_id, super_weibo_id=super_weibo_id)
+
+
+def delete_weibo(request):
+    """
+    返回及status状态说明
+        0:成功
+        1：未检查到指定微博
+        4：未登录
+        5：权限不足（不是自己的微博）
+
+    :param request:
+    :return:
+    """
+    if request.method == "DELETE":
+        weibo_id = request.GET.get("weibo_id")
+        try:
+            weibo_id = int(weibo_id)
+            weibo = WeiboItem.objects.get(id = weibo_id)
+        except:
+            # 未检查到ID
+            return HttpResponse("{\"status\":1}")
+        user = check_logged(request)
+        if user:
+            if weibo.author == user:
+                weibo.delete()
+                # todo 未完待续
+                return HttpResponse("{\"status\":0}")     # todo
+            else:
+                return HttpResponse("{\"status\":5}")
+        else:
+            return HttpResponse("{\"status\":4}")# todo
