@@ -181,7 +181,7 @@ def logout(request):
 
 
 # 获取用户信息（个人资料）
-def get_user_info(request):
+def user_weibo_info(request):
     """
     返回及status状态说明
         0:成功
@@ -244,3 +244,30 @@ def get_user_home(request):
     else:
         # 非GET不接
         return HttpResponse(status=404)
+
+
+def user_info(request):
+    """
+    0：成功
+    1:未知用户
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == 'GET':
+            user_id = request.GET.get("user_id")
+            try:
+                user = User.objects.get(username=user_id)
+            except:
+                return HttpResponse("{\"status\":1}",status=404)
+            response_data = {
+                "user_sex": '男' if user.sex==1 else '女' if user.sex==2 else '其他' if user.sex==3 else '未设定',
+                "user_birth": user.birth.strftime('%Y-%m-%d'),
+                "school": user.school,
+                "photo": []
+            }
+            return HttpResponse(json.dumps(response_data))
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse("{\"status\":6}", status=500)
