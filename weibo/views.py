@@ -69,6 +69,19 @@ def get_item_list(request):
 
 
 def create_weibo(request):
+    """
+    返回及status状态说明
+        0：成功
+        2：未登录
+        3：微博类型非数字
+        4：在微博内容为纯文本的情况下没有内容
+        5：转发失败
+        6：未知错误
+        7：super非数字
+
+    :param request:
+    :return:
+    """
     content = request.GET.get('content', '')
     pictures = request.GET.get('picture', '[]')
     super_weibo_id = request.GET.get('super', '')
@@ -117,7 +130,7 @@ def delete_weibo(request):
     :return:
     """
     if request.method == "DELETE":
-        weibo_id = request.GET.get("weibo_id")
+        weibo_id = request.POST.get("weibo_id")
         try:
             weibo_id = int(weibo_id)
             weibo = WeiboItem.objects.get(id = weibo_id)

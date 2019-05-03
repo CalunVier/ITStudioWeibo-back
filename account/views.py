@@ -180,8 +180,15 @@ def logout(request):
         pass
 
 
-# 获取用户信息
+# 获取用户信息（个人资料）
 def get_user_info(request):
+    """
+    返回及status状态说明
+        0:成功
+        1：未知用户
+    :param request:
+    :return:
+    """
     if request.method == 'GET':
         user_id = request.GET.get('user_id')
         try:
