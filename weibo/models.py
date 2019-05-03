@@ -20,7 +20,7 @@ class WeiboInfo(models.Model):
     forward_num = models.IntegerField(default=0, verbose_name=u'转发量')
     comment_num = models.IntegerField(default=0, verbose_name=u'评论量')
     like_num = models.IntegerField(default=0, verbose_name=u'点赞数量')
-    like = models.ManyToManyField('account.User', related_name="like_person", verbose_name=u'点赞的人')
+    like = models.ManyToManyField('account.User', related_name="like_weibo", verbose_name=u'点赞的人')
 
 
 # 微博表

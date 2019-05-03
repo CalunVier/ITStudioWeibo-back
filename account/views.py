@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from .models import UserWeiboInfo, User
+from weibo.models import WeiboItem
 from .account_lib import check_password_verify, set_login_cookie, check_email_verify, to_register, sign_password_md5, check_logged
 from ITstudioWeibo.general import check_email_verify_code_not_right
 import logging
@@ -271,3 +272,24 @@ def user_info(request):
             return HttpResponse(status=404)
     except:
         return HttpResponse("{\"status\":6}", status=500)
+
+
+def my_weibo_list(request):
+    if request.method == 'GET':
+        tag = request.GET.get("tag", '')
+        user_id = request.GET.get("user_id")
+
+        # 获取用户对象
+        try:
+            user = User.objects.filter(username=user_id)
+        except:
+            # todo 填写返回
+            logger.debug("未知用户")
+            return HttpResponse()
+        # 判断tag是否有内容
+        if tag == 'like':
+            # 检索数据库
+
+            pass
+    else:
+        return HttpResponse(status=404)

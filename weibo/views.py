@@ -47,13 +47,13 @@ def get_item_list(request):
                 weibo_db = WeiboItem.objects.none()
                 if followings:
                     for author_info in followings:
-                        weibo_db = weibo_db | WeiboItem.objects.filter(author=author_info.user)
+                        weibo_db = weibo_db | WeiboItem.objects.select_related('super', 'weiboinfo').filter(author=author_info.user)
             else:
                 return HttpResponse(json.dumps({'status': 2}), status=401)
         elif tag == 'video':
-            weibo_db = WeiboItem.objects.filter(content_type=2)
+            weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').filter(content_type=2)
         else:
-            weibo_db = WeiboItem.objects.all().order_by('-weiboinfo__like_num')
+            weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').all().order_by('-weiboinfo__like_num')
 
         # 分页
         weibo_db = page_of_queryset(weibo_db, page=page, num=num)
@@ -62,7 +62,7 @@ def get_item_list(request):
         response_data = weibo_list_process_to_str(request, weibo_db, page)
 
         # 处理完毕返回列表
-        return HttpResponse(response_data, status=200)
+        return HttpResponse(json.dumps(response_data), status=200)
     else:
         # 非POST不接
         return HttpResponse(status=404)
@@ -141,9 +141,10 @@ def delete_weibo(request):
         if user:
             if weibo.author == user:
                 weibo.delete()
-                # todo 未完待续
-                return HttpResponse("{\"status\":0}")     # todo
+                user.user_info.weibo_num -= 1
+                user.save()
+                return HttpResponse("{\"status\":0}")
             else:
                 return HttpResponse("{\"status\":5}")
         else:
-            return HttpResponse("{\"status\":4}")# todo
+            return HttpResponse("{\"status\":4}")

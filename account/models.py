@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.hashers import is_password_usable
 
+
 class UserWeiboInfo(models.Model):
     """
     :model:'accoun.User'.

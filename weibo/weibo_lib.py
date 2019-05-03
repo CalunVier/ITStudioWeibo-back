@@ -4,6 +4,10 @@ from .models import WeiboToVideo, WeiboItem, Images, WeiboToImage, Video
 from django.http import HttpResponse
 import pathlib
 import json
+import logging
+
+
+logger = logging.getLogger("my_logger.weibo.lib")
 
 
 # 将微博数据库QuerySet处理为json字符串
@@ -11,6 +15,7 @@ def weibo_list_process_to_str(request, weibo_db, page):
     weibo_list_response_date = []
     for item in weibo_db:
         item_data = {
+            'weibo_id': item.id,
             "type": 'text' if item.content_type == 0 else 'image' if item.content_type == 1 else 'video',
             "content": item.content,
             "author_id": item.author.username,
@@ -20,10 +25,30 @@ def weibo_list_process_to_str(request, weibo_db, page):
             "comment_num": item.weiboinfo.comment_num,
             "like_num": item.weiboinfo.like_num,
             "time": item.create_time.timestamp(),
+            'is_like': False,
         }
 
-        # 检查是否following
-        if check_logged(request):
+        # 处理转发情况
+        if item.super:
+            item_data['is_forward'] = True
+            item_data["super_weibo"] = {
+                'weibo_id': item.super.id,
+                'content': item.super.content,
+                'author_name': item.super.author.nick,
+                'author_id': item.super.author.id,
+            }
+        else:
+            item_data['is_forward'] = False
+
+        user = check_logged(request)
+        if user:
+            # 处理点赞情况
+            logger.debug('处理点赞情况')
+            if item.weiboinfo.like.filter(id=user.id):
+                item_data['is_like'] = True
+
+            # 检查是否following
+
             username = request.COOKIES.get('username', '')
             if username:
                 user = User.objects.get(username=username)
@@ -61,7 +86,6 @@ def weibo_list_process_to_str(request, weibo_db, page):
         'list': weibo_list_response_date,
         'status': 0,
     }
-    response_data = json.dumps(response_data)
     return response_data
 
 
@@ -83,11 +107,14 @@ def to_create_weibo(content, user, content_type=0, imgs_id=None, video_id=None, 
     :return:
     """
     try:
-        weibo = WeiboItem(author=user, super=super_weibo_id, content=content)
+        weibo = WeiboItem(author=user, content=content)
         if super_weibo_id:
             try:
                 super_weibo = WeiboItem.objects.get(id=super_weibo_id)
-                weibo.super = super_weibo
+                if super_weibo.super:
+                    weibo.super = super_weibo.super
+                else:
+                    weibo.super = super_weibo
             except:
                 return HttpResponse("{\"status\":5}", status=500)
         weibo.save()
