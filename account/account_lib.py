@@ -13,7 +13,6 @@ logger = logging.getLogger('my_logger.account.lib')
 
 # 注册
 def to_register(username, nick, password, email):
-    # TODO 添加注册UserWeiboInfo
     """
     返回值
         0:注册成功
@@ -143,7 +142,7 @@ def check_nickname_verify(nickname):
 
 
 # 检查是否登陆
-def check_logged(request):
+def check_logged(request) -> User:
     if 'username' in request.COOKIES:   # 检查username是否存在于COOKIE
         if time.time()-request.COOKIES.get('login_time', 0) < 86400: # 检查登陆是否过期
             # 检查登陆是否异常
@@ -153,7 +152,7 @@ def check_logged(request):
                 if user:
                     # 检查用户是否为active
                     if user[0].is_active:
-                        return True, user[0]
+                        return user[0]
                     else:
                         return None
                 else:

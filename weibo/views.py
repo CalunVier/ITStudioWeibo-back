@@ -3,8 +3,8 @@ from django.http import HttpResponse
 from account.account_lib import check_logged
 from account.models import User
 from ITstudioWeibo.calunvier_lib import page_of_queryset
-from .models import WeiboItem, WeiboImages
-from .weibo_lib import weibo_list_process_to_str
+from .models import WeiboItem, Images, WeiboToImage, Video, WeiboToVideo
+from .weibo_lib import weibo_list_process_to_str, to_create_weibo
 from django.db.models.query import QuerySet
 import json
 import pathlib
@@ -49,8 +49,7 @@ def get_item_list(request):
                     for author_info in followings:
                         weibo_db = weibo_db | WeiboItem.objects.filter(author=author_info.user)
             else:
-                # todo 查询要求登陆的http状态码
-                return HttpResponse(json.dumps({'status': 2}), status=400)
+                return HttpResponse(json.dumps({'status': 2}), status=401)
         elif tag == 'video':
             weibo_db = WeiboItem.objects.filter(content_type=2)
         else:
@@ -69,19 +68,39 @@ def get_item_list(request):
         return HttpResponse(status=404)
 
 
-def create_weibo(request, content, user, content_type=0, imgs_id=None, video_id=None, super=None):
-    weibo = WeiboItem(author=user, super=super, content=content, content_type=content_type)
-    user.user_info.weibo_num += 1
-    user.user_info.save()
-    if content_type == 1:
-        if imgs_id:
-            imgs_db = WeiboImages.objects.none()
-            for img_id in imgs_id:
-                try:
-                    imgs_db = imgs_db | WeiboImages.objects.get(image_id=imgs_id)
-                except:
-                    pass
-            if imgs_db:
-                pass
-            # todo 未完待续
+def create_weibo(request):
+    # todo 未完待续
+    content = request.GET.get('content', '')
+    pictures = request.GET.get('picture', '[]')
+    super_weibo_id = request.GET.get('super', '')
+    content_type = request.GET.get('content_type', '0')
+    video_id = request.GET.get('video','')
 
+    # 安全检查
+    # 类型转换
+    try:
+        content_type = int(content_type)
+    except:
+        # 微博类型非数字
+        return HttpResponse("{\"status\":3}")
+
+    try:
+        super_weibo_id = int(super_weibo_id)
+    except:
+        # 父微博ID非数字
+        return HttpResponse("{\"status\":7}")
+
+    try:
+        pictures = json.dumps(pictures)
+    except:
+        pictures = None
+
+    # 登陆状态检查
+    user = check_logged(request)
+    if not user:
+        # 未登录
+        return HttpResponse("{\"status\":2}")
+    if content_type == 0 and (not content):
+        # 在微博内容为纯文本的情况下没有内容
+        return HttpResponse('{\"status\":4}')
+    return to_create_weibo(content=content, user=user, content_type=content_type, imgs_id=pictures, video_id=video_id, super_weibo_id=super_weibo_id)

@@ -1,9 +1,12 @@
 from account.account_lib import check_logged
 from account.models import User
+from .models import WeiboToVideo, WeiboItem, Images, WeiboToImage, Video
+from django.http import HttpResponse
 import pathlib
 import json
 
 
+# 将微博数据库QuerySet处理为json字符串
 def weibo_list_process_to_str(request, weibo_db, page):
     weibo_list_response_date = []
     for item in weibo_db:
@@ -62,4 +65,72 @@ def weibo_list_process_to_str(request, weibo_db, page):
     return response_data
 
 
+# 创建微博
+def to_create_weibo(content, user, content_type=0, imgs_id=None, video_id=None, super_weibo_id=None):
+    """
+    返回及status说明
+        本函数直接返回HttpResponse对象
+        由本函数返回的status情况
+            0：成功
+            5：转发失败
 
+    :param content: 微博内容
+    :param user:作者Model对象
+    :param content_type:内容类型0/1/2
+    :param imgs_id:如果有图片，图片ID
+    :param video_id:如果有视频，视频ID
+    :param super_weibo_id:如果是转发，父微博的ID
+    :return:
+    """
+    try:
+        weibo = WeiboItem(author=user, super=super_weibo_id, content=content)
+        if super_weibo_id:
+            try:
+                super_weibo = WeiboItem.objects.get(id=super_weibo_id)
+                weibo.super = super_weibo
+            except:
+                return HttpResponse("{\"status\":5}", status=500)
+        weibo.save()
+        user.user_info.weibo_num += 1
+        user.user_info.save()
+        if content_type == 1:
+            if imgs_id:
+                imgs_db = Images.objects.none()
+                for img_id in imgs_id:
+                    try:
+                        imgs_db = imgs_db | Images.objects.get(image_id=img_id)
+                    except:
+                        pass
+
+                if imgs_db:
+                    weibo.content_type = 1
+                    weibo.save()
+                    for img in imgs_db:
+                        WeiboToImage(weibo=weibo, image=img).save()
+                    return HttpResponse("{\"status\":0}", status=200)
+
+            # 没有检测到上传的图片信息，更正微博类型为0，并保存微博
+            weibo.content_type = 0
+            weibo.save()
+            return HttpResponse(json.dumps({"status": "0","info": "We didn't find any picture, changed type to \"text\"."}))
+        elif content_type == 2:
+            if video_id:
+                try:
+                    video_db = Video.objects.get(video_id=video_id)
+                except:
+                    video_db = None
+                if video_db:
+                    weibo.content_type = 2
+                    weibo.save()
+                    WeiboToVideo(weibo=weibo, video=video_db).save()
+                    return HttpResponse("{\"status\":0}", status=200)
+            # 没有检测到上传的视频信息，更正微博类型为0，并保存微博
+            weibo.content_type = 0
+            weibo.save()
+            return HttpResponse(json.dumps({"status": "0","info": "We didn't find any video, changed type to \"text\"."}))
+        else:
+            weibo.content_type = 0
+            weibo.save()
+            return HttpResponse("{\"status\":0}", status=200)
+    except:
+        return HttpResponse("{\"status\":6}")

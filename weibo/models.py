@@ -2,11 +2,19 @@ from django.db import models
 from django.conf import settings
 
 
-class WeiboImages(models.Model):
+# 图片表
+class Images(models.Model):
     image_id = models.AutoField(primary_key=True, unique=True, auto_created=True, verbose_name="ImageID")
     image = models.ImageField()
 
 
+# 视频表
+class Video(models.Model):
+    video_id = models.AutoField(primary_key=True, unique=True, auto_created=True, verbose_name="VedioID")
+    video = models.FileField(verbose_name='视频')
+
+
+# 微博信息表
 class WeiboInfo(models.Model):
     weibo = models.OneToOneField('weibo.WeiboItem',related_name='weiboinfo', verbose_name=u'微博')
     forward_num = models.IntegerField(default=0, verbose_name=u'转发量')
@@ -15,17 +23,13 @@ class WeiboInfo(models.Model):
     like = models.ManyToManyField('account.User', related_name="like_person", verbose_name=u'点赞的人')
 
 
+# 微博表
 class WeiboItem(models.Model):
     """
     :type
         0:普通微博
         1:图片
         2:视频
-    微博媒体存储结构：
-        图片
-        media/weibo/pictures/2019.4.25/weibo_id/1.jpg
-        视频:
-        media/weibo/vedio/2019.4.25/weibo_id/vedio.mp4
     """
     type_choices = (
         (0, '文本'),
@@ -50,6 +54,7 @@ class WeiboItem(models.Model):
         return self.content
 
 
+# 微博评论表
 class WeiboComment(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     weibo = models.ForeignKey(WeiboItem, on_delete=models.CASCADE)
@@ -57,7 +62,20 @@ class WeiboComment(models.Model):
     ctime = models.DateTimeField(auto_now=True)
 
 
+# 消息表
 class Notice(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='用户')
     notice = models.CharField(max_length=128, verbose_name='通知内容')
     new = models.BooleanField(default=True, verbose_name='是否为新消息')
+
+
+# 微博_图片表
+class WeiboToImage(models.Model):
+    weibo = models.OneToOneField(WeiboItem, primary_key=True, related_name='images', verbose_name='微博')
+    image = models.ForeignKey(Images, verbose_name='图片')
+
+
+# 微博_视频表
+class WeiboToVideo(models.Model):
+    weibo = models.OneToOneField(WeiboItem, primary_key=True, related_name='vedio', verbose_name='微博')
+    video = models.ForeignKey(Video, verbose_name='视频')
