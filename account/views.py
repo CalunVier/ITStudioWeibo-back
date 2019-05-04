@@ -345,6 +345,45 @@ def change_nick(request):
         return HttpResponse("{\"status\":6}", status=500)
 
 
+# 更改关注状态
+def new_follow(request):
+    """
+    返回及status状态说明
+        0：成功
+        1：位置的follow用户
+        4：未登录
+        6：未知错误
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == "POST":
+            follow_id = request.POST.get("follow_id", '')
+            user = check_logged(request)
+            if not user:
+                return HttpResponse("{\"status\":4}", status=401)
+
+            try:
+                follow_user = User.objects.get(username=follow_id)
+            except:
+                return HttpResponse("{\"status\":1}", status=404)
+
+            if follow_user in user.user_info.following.all():
+                user.user_info.following.remove(*follow_user)
+                user.user_info.follow_num -= 1
+                user.user_info.save()
+            else:
+                user.user_info.following.add(*follow_user)
+                user.user_info.follow_num += 1
+                user.user_info.save()
+            return HttpResponse("{\"status\":0}")
+
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse("{\"status\":6}", status=500)
+
+
 """GET"""
 
 

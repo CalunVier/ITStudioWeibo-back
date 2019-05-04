@@ -17,6 +17,7 @@ logger = logging.getLogger('my_logger.weibo.view')
 """GET"""
 
 
+# 获取首页微博列表
 def get_item_list(request):
     """
     :status :
@@ -74,6 +75,7 @@ def get_item_list(request):
 """DELETE"""
 
 
+# 删除微博
 def delete_weibo(request):
     """
     返回及status状态说明
@@ -109,6 +111,7 @@ def delete_weibo(request):
 """POST"""
 
 
+# 发表微博
 def create_weibo(request):
     """
     返回及status状态说明
@@ -159,6 +162,7 @@ def create_weibo(request):
     return to_create_weibo(content=content, user=user, content_type=content_type, imgs_id=pictures, video_id=video_id, super_weibo_id=super_weibo_id)
 
 
+# 上传图片
 def upload_image(request):
     """
     返回及状态说明
