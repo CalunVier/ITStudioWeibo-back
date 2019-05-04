@@ -10,8 +10,8 @@ import logging
 logger = logging.getLogger("my_logger.weibo.lib")
 
 
-# 将微博数据库QuerySet处理为json字符串
-def weibo_list_process_to_str(request, weibo_db, page):
+# 将微博数据库QuerySet处理为可转化为json字符串的python字典
+def weibo_list_process_to_dict(request, weibo_db, page):
     weibo_list_response_date = []
     for item in weibo_db:
         item_data = {
@@ -154,7 +154,7 @@ def to_create_weibo(content, user, content_type=0, imgs_id=None, video_id=None, 
             # 没有检测到上传的视频信息，更正微博类型为0，并保存微博
             weibo.content_type = 0
             weibo.save()
-            return HttpResponse(json.dumps({"status": "0","info": "We didn't find any video, changed type to \"text\"."}))
+            return HttpResponse(json.dumps({"status": "0", "info": "We didn't find any video, changed type to \"text\"."}))
         else:
             weibo.content_type = 0
             weibo.save()

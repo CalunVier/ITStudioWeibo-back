@@ -3,6 +3,8 @@ from django.http import HttpResponse
 from .models import UserWeiboInfo, User
 from weibo.models import WeiboItem
 from .account_lib import check_password_verify, set_login_cookie, check_email_verify, to_register, sign_password_md5, check_logged
+from weibo.weibo_lib import weibo_list_process_to_dict
+from ITstudioWeibo.calunvier_lib import page_of_queryset
 from ITstudioWeibo.general import check_email_verify_code_not_right
 import logging
 import json
@@ -247,6 +249,7 @@ def get_user_home(request):
         return HttpResponse(status=404)
 
 
+# 个人资料的主页
 def user_info(request):
     """
     0：成功
@@ -266,6 +269,7 @@ def user_info(request):
                 "user_birth": user.birth.strftime('%Y-%m-%d'),
                 "school": user.school,
                 "photo": []
+                # todo 添加photo的解析
             }
             return HttpResponse(json.dumps(response_data))
         else:
@@ -274,22 +278,57 @@ def user_info(request):
         return HttpResponse("{\"status\":6}", status=500)
 
 
+# 个人资料的微博
 def my_weibo_list(request):
-    if request.method == 'GET':
-        tag = request.GET.get("tag", '')
-        user_id = request.GET.get("user_id")
+    """
+    返回及status状态说明
+        status：
+            0:成功
+            1:未知用户
+            3：未定义的tag标签
+            4：分页数据错误
+            6:未知错误
+        非GET请求不做处理返回HTTP状态404
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == 'GET':
+            tag = request.GET.get("tag", '')
+            user_id = request.GET.get("user_id")
+            page = request.GET.get("page", 1)
+            num = request.GET.get('num', 10)
+            try:
+                page = int(page)
+                num = int(num)
+            except:
+                # 分页数据错误 todo 查到相关http状态码
+                return HttpResponse("{\"status\":4}", 500)
 
-        # 获取用户对象
-        try:
-            user = User.objects.filter(username=user_id)
-        except:
-            # todo 填写返回
-            logger.debug("未知用户")
-            return HttpResponse()
-        # 判断tag是否有内容
-        if tag == 'like':
-            # 检索数据库
-
-            pass
-    else:
-        return HttpResponse(status=404)
+            # 获取用户对象
+            try:
+                user = User.objects.get(username=user_id)
+            except:
+                # todo 填写返回
+                logger.debug("未知用户")
+                return HttpResponse("{\"status\":1}", status=404)
+            # 判断tag是否有内容
+            if tag == 'like':
+                # 检索数据库
+                weibo_db = user.like_weibo.all()
+            elif tag == 'collect':
+                weibo_db = user.user_info.collect_weibo.all()
+            elif tag == 'personalweibo':
+                weibo_db = WeiboItem.objects.filter(author=user, super=None)
+            else:
+                # 未定义的tag标签 todo 查询相关http状态码
+                return HttpResponse("{\"status\":3}", status=400)
+            # 分页
+            weibo_db = page_of_queryset(weibo_db, page, num)
+            response_dict = weibo_list_process_to_dict(request, weibo_db, page)
+            return HttpResponse(json.dumps(response_dict), status=200)
+        else:
+            return HttpResponse(status=404)
+    except:
+        logger.error("未知错误")
+        return HttpResponse("{\"status\":6}")

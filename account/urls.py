@@ -8,5 +8,7 @@ urlpatterns = [
     url(r'^logout', logout),     # 登出
     url(r'^user_weibo_info', user_weibo_info),   # 个人资料
     url(r"^home", get_user_home),     # 个人中心
-    url(r"^user_info", user_info)
+    url(r"^user_info", user_info),
+    url(r"^my_weibo_list", my_weibo_list),
+
 ]
