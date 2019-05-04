@@ -9,10 +9,14 @@ from ITstudioWeibo.general import check_email_verify_code_not_right
 import logging
 import json
 import random
+import datetime
+import re
 import string
 
 # todo 解决删除用户再注册的问题
 logger = logging.getLogger('my_logger.account.view')
+
+"""POST"""
 
 
 # 注册
@@ -181,6 +185,104 @@ def logout(request):
     else:
         # 非get不接
         pass
+
+
+# 修改个人资料
+def change_user_info(request):
+    """
+    返回及status说明
+        status
+            0:已尝试对有效数据做出更改
+            4：未登录
+            6：未知错误
+        对非POST请求不做处理
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == "POST":
+            new_sex = request.POST.get('user_sex', -1)
+            new_birth = request.POST.get('user_birth', '')
+            new_school = request.POST.get('school', '')
+
+            user = check_logged(request)
+            if not user:
+                # 未登录
+                return HttpResponse("{\"status\":4}", status=401)
+
+            # 数据预处理
+            re_birth = re.match(r'(\d+)-(\d+)-(\d+)', new_birth)
+            if re_birth:
+                try:
+                    new_birth = datetime.datetime(year=int(re_birth.group(1)), month=int(re_birth.group(2)), day=int(re_birth.group(3)))
+                except:
+                    new_birth = None
+            else:
+                new_birth = None
+            try:
+                new_sex = int(new_sex)
+            except:
+                new_sex = -1
+
+            if new_sex in (0, 1, 2, 3):
+                user.sex = new_sex
+            if new_birth and new_birth < datetime.datetime.now():
+                user.birth = new_birth
+            if new_school:
+                if new_school == 'none':
+                    user.school = ''
+                else:
+                    user.school = new_school
+            user.save()
+            return HttpResponse("{\"status\":0}")
+
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse("{\"status\":6}", status=503)
+
+
+# 修改密码
+def change_password(request):
+    """
+    返回及status状态说明
+        0:成功
+        1：未知用户
+        2：新密码不符合规范
+        3：旧密码错误
+        6：未知错误
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == 'POST':
+            old_password = request.POST.get('old_password')
+            new_password = request.POST.get('new_password')
+            username = request.POST.get('user_id')
+            try:
+                user = User.objects.get(username=username)
+            except:
+                return HttpResponse("{\"status\":1}", status=404)
+            if check_password_verify(new_password):
+                if user.check_password(old_password):
+                    user.password = new_password
+                    user.save()
+                    return HttpResponse("{\"status\":0}")
+                else:
+                    # 旧密码错误
+                    return HttpResponse("{\"status\":3}", status=403)
+            else:
+                # 新密码不符合规范
+                return HttpResponse("{\"status\":2}", status=406)
+
+
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse("{\"status\":6}", status=500)
+
+
+"""GET"""
 
 
 # 获取用户信息（个人资料）

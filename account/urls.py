@@ -10,5 +10,6 @@ urlpatterns = [
     url(r"^home", get_user_home),     # 个人中心
     url(r"^user_info", user_info),
     url(r"^my_weibo_list", my_weibo_list),
+    url(r'^change_password', change_password),
 
 ]
