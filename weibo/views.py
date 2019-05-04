@@ -72,6 +72,91 @@ def get_item_list(request):
         return HttpResponse(status=404)
 
 
+def get_weibo_info(request):
+    """
+    返回及status说明
+        0:成功,
+        3:未知的微博
+        6:未知错误
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == "GET":
+            weibo_id = request.GET.get('weibo_id', '')
+            try:
+                weibo_id = int(weibo_id)
+                item = WeiboItem.objects.get(id = weibo_id)
+            except:
+                return HttpResponse("{\"status\":3}", status=404)
+            item_data = {
+                "type": 'text' if item.content_type == 0 else 'image' if item.content_type == 1 else 'video',
+                "content": item.content,
+                "weibo_id": weibo_id,
+                "author_id": item.author.username,
+                "author_name": item.author.nick,
+                "author_head": item.author.head.url,
+                "forward_num": item.weiboinfo.forward_num,
+                "comment_num": item.weiboinfo.comment_num,
+                "like_num": item.weiboinfo.like_num,
+                "time": item.create_time.timestamp(),
+                "status": 0
+            }
+
+            # 处理转发情况
+            if item.super:
+                item_data['is_forward'] = True
+                item_data["super_weibo"] = {
+                    'weibo_id': item.super.id,
+                    'content': item.super.content,
+                    'author_name': item.super.author.nick,
+                    'author_id': item.super.author.id,
+                }
+            else:
+                item_data['is_forward'] = False
+
+            user = check_logged(request)
+            if user:
+                # 处理点赞情况
+                logger.debug('处理点赞情况')
+                if item.weiboinfo.like.filter(id=user.id):
+                    item_data['is_like'] = True
+
+                # 检查是否following
+
+                username = request.COOKIES.get('username', '')
+                if username:
+                    user = User.objects.get(username=username)
+                    check_follow = user.userweiboinfo.following.filter(username=item_data['author_id'])
+                    if check_follow:
+                        item_data['following'] = True
+                    else:
+                        item_data['following'] = False
+                else:
+                    item_data['following'] = False
+            else:
+                item_data['following'] = False
+
+                # 处理视频和图片
+                if item.content_type == 1:  # img
+                    imgs_db = item.images.image.all()
+                    imgs_list = []
+                    for img in imgs_db:
+                        imgs_list.append(img.image.url)
+                    item_data['imgs'] = imgs_list
+                elif item.content_type == 2:  # video
+                    item = WeiboItem.objects.get()
+                    videos_db = item.video.video
+                    item_data['video'] = videos_db.video.url
+
+            # 成功，返回结果
+            return HttpResponse(json.dumps(item_data))
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse("{\"status\":6}", status=500)
+
+
 """DELETE"""
 
 

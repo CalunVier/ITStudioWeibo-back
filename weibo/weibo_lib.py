@@ -64,21 +64,16 @@ def weibo_list_process_to_dict(request, weibo_db, page):
 
         # 处理视频和图片
         if item.content_type == 1:  # img
-            imgs_path = pathlib.Path(
-                r'./media/weibo/pictures/{0}.{1}.{2}/{3}'.format(item.create_time.year, item.create_time.month,
-                                                                 item.create_time.day, item.id))
+            imgs_db = item.images.image.all()
             imgs_list = []
-            if imgs_path.is_dir():
-                for img in imgs_path.iterdir():
-                    imgs_list.append(img.as_posix())
+            for img in imgs_db:
+                imgs_list.append(img.image.url)
             item_data['imgs'] = imgs_list
         elif item.content_type == 2:  # video
-            video_path = pathlib.Path(
-                r'./media/weibo/video/{0}.{1}.{2}/{3}'.format(item.create_time.year, item.create_time.month,
-                                                              item.create_time.day, item.id))
-            if video_path.is_dir():
-                for v in video_path.iterdir():
-                    item_data['video'] = v.as_posix()
+            item = WeiboItem.objects.get()
+            videos_db = item.video.video
+            item_data['video'] = videos_db.video.url
+
         # 添加到返回列
         weibo_list_response_date.append(item_data)
     response_data = {

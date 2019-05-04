@@ -72,10 +72,10 @@ class Notice(models.Model):
 # 微博_图片表
 class WeiboToImage(models.Model):
     weibo = models.OneToOneField(WeiboItem, primary_key=True, related_name='images', verbose_name='微博')
-    image = models.ForeignKey(Images, verbose_name='图片')
+    image = models.ManyToManyField(Images, verbose_name='图片')
 
 
 # 微博_视频表
 class WeiboToVideo(models.Model):
-    weibo = models.OneToOneField(WeiboItem, primary_key=True, related_name='vedio', verbose_name='微博')
+    weibo = models.OneToOneField(WeiboItem, primary_key=True, related_name='video', verbose_name='微博')
     video = models.ForeignKey(Video, verbose_name='视频')
