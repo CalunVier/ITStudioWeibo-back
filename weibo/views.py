@@ -14,6 +14,9 @@ import logging
 logger = logging.getLogger('my_logger.weibo.view')
 
 
+"""GET"""
+
+
 def get_item_list(request):
     """
     :status :
@@ -68,6 +71,44 @@ def get_item_list(request):
         return HttpResponse(status=404)
 
 
+"""DELETE"""
+
+
+def delete_weibo(request):
+    """
+    返回及status状态说明
+        0:成功
+        1：未检查到指定微博
+        4：未登录
+        5：权限不足（不是自己的微博）
+
+    :param request:
+    :return:
+    """
+    if request.method == "DELETE":
+        weibo_id = request.POST.get("weibo_id")
+        try:
+            weibo_id = int(weibo_id)
+            weibo = WeiboItem.objects.get(id = weibo_id)
+        except:
+            # 未检查到ID
+            return HttpResponse("{\"status\":1}")
+        user = check_logged(request)
+        if user:
+            if weibo.author == user:
+                weibo.delete()
+                user.user_info.weibo_num -= 1
+                user.save()
+                return HttpResponse("{\"status\":0}")
+            else:
+                return HttpResponse("{\"status\":5}")
+        else:
+            return HttpResponse("{\"status\":4}")
+
+
+"""POST"""
+
+
 def create_weibo(request):
     """
     返回及status状态说明
@@ -118,33 +159,26 @@ def create_weibo(request):
     return to_create_weibo(content=content, user=user, content_type=content_type, imgs_id=pictures, video_id=video_id, super_weibo_id=super_weibo_id)
 
 
-def delete_weibo(request):
+def upload_image(request):
     """
-    返回及status状态说明
-        0:成功
-        1：未检查到指定微博
-        4：未登录
-        5：权限不足（不是自己的微博）
-
+    返回及状态说明
+        0：成功
+        6：未知错误
+        7：未发现上传的图片
     :param request:
     :return:
     """
-    if request.method == "DELETE":
-        weibo_id = request.POST.get("weibo_id")
-        try:
-            weibo_id = int(weibo_id)
-            weibo = WeiboItem.objects.get(id = weibo_id)
-        except:
-            # 未检查到ID
-            return HttpResponse("{\"status\":1}")
-        user = check_logged(request)
-        if user:
-            if weibo.author == user:
-                weibo.delete()
-                user.user_info.weibo_num -= 1
-                user.save()
-                return HttpResponse("{\"status\":0}")
-            else:
-                return HttpResponse("{\"status\":5}")
+    try:
+        if request.method == 'POST':
+            try:
+                image = request.FILES['image']
+            except:
+                # 没有发现上传的图片
+                return HttpResponse("{\"status\":7}", status=204)
+            img_db = Images(image=image)
+            img_db.save()
+            return HttpResponse(json.dumps({'img_id': img_db.image_id, 'status': 0}, status=201))
         else:
-            return HttpResponse("{\"status\":4}")
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse("{\"status\":6}", status=500)

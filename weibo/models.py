@@ -5,13 +5,13 @@ from django.conf import settings
 # 图片表
 class Images(models.Model):
     image_id = models.AutoField(primary_key=True, unique=True, auto_created=True, verbose_name="ImageID")
-    image = models.ImageField()
+    image = models.ImageField(upload_to='upload/image/%Y/%m')
 
 
 # 视频表
 class Video(models.Model):
     video_id = models.AutoField(primary_key=True, unique=True, auto_created=True, verbose_name="VedioID")
-    video = models.FileField(verbose_name='视频')
+    video = models.FileField(upload_to='upload/video/%Y/%m', verbose_name=u'视频')
 
 
 # 微博信息表
