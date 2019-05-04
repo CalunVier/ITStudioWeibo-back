@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from .models import UserWeiboInfo, User
-from weibo.models import WeiboItem
-from .account_lib import check_password_verify, set_login_cookie, check_email_verify, to_register, sign_password_md5, check_logged
+from weibo.models import WeiboItem, Images
+from .account_lib import check_password_verify, set_login_cookie, check_email_verify, to_register, check_logged, check_nickname_verify
 from weibo.weibo_lib import weibo_list_process_to_dict
 from ITstudioWeibo.calunvier_lib import page_of_queryset
 from ITstudioWeibo.general import check_email_verify_code_not_right
@@ -278,6 +278,69 @@ def change_password(request):
 
         else:
             return HttpResponse(status=404)
+    except:
+        return HttpResponse("{\"status\":6}", status=500)
+
+
+# 修改头像
+def change_head(request):
+    """
+    返回及status状态说明
+        0:成功
+        3：未找到指定图片
+        4：未登录
+        6：未知错误
+    :param request:
+    :return:
+    """
+    try:
+        head_id = request.POST.get('head', '')
+        try:
+            head_id = int(head_id)
+        except:
+            head_id = None
+
+        user = check_logged(request)
+        if not user:
+            return HttpResponse("{\"status\":4}", status=401)
+
+        if head_id is not None:
+            try:
+                head_img = Images.objects.get(image_id=head_id)
+            except:
+                return HttpResponse("{\"status\":3}", status=406)
+            user.head = head_img.image
+            user.save()
+            return HttpResponse("{\"status\":0}")
+        else:
+            return HttpResponse("{\"status\":3}", status=406)
+    except:
+        return HttpResponse("{\"status\":6}", status=500)
+
+
+def change_nick(request):
+    """
+    返回及status状态说明
+        0:成功
+        3：昵称不合法
+        4：未登录
+        6：未知错误
+    :param request:
+    :return:
+    """
+    try:
+        nick = request.POST.get('name', '')
+
+        user = check_logged(request)
+        if not user:
+            return HttpResponse("{\"status\":4}", status=401)
+
+        if check_nickname_verify(nick):
+            user.nick = nick
+            user.save()
+            return HttpResponse("{\"status\":0}")
+        else:
+            return HttpResponse("{\"status\":3}", status=403)
     except:
         return HttpResponse("{\"status\":6}", status=500)
 
