@@ -384,6 +384,37 @@ def new_follow(request):
         return HttpResponse("{\"status\":6}", status=500)
 
 
+def forgot_password(request):
+    try:
+        if request.method == "POST":
+            email = request.POST.get('email', '')
+            verfy_code = request.POST.get('verify_code', '')
+            new_password = request.POST.get('new_password','')
+            if not check_email_verify(email):
+                # 错误的email todo
+                return HttpResponse()
+            if True or check_email_verify_code_not_right(email, verfy_code):
+                # 验证码错误
+                return HttpResponse("{\"status\":2}")
+            else:
+                try:
+                    user = User.objects.get(email = email)
+                except:
+                    # 未检索到用户
+                    return HttpResponse("{\"status\":1}", status=404)
+                if check_password_verify(new_password):
+                    user.password = new_password
+                    user.save()
+                    return HttpResponse("{\"status\":0}")
+                else:
+                    return HttpResponse("{\"status\":3}", status=403)
+
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse("{\"status\":6}", status=500)
+
+
 """GET"""
 
 
