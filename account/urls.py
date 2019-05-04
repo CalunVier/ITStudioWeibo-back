@@ -14,5 +14,5 @@ urlpatterns = [
     url(r'^change_head', change_head),
     url(r'^change_nick', change_nick),
     url(r'^new_follow', new_follow),
-    url(r"^forgot_password")
+    url(r"^forgot_password", forgot_password)
 ]
