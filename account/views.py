@@ -385,6 +385,16 @@ def new_follow(request):
 
 
 def forgot_password(request):
+    """
+    返回及状态说明
+        0:成功
+        1：未检索到用户
+        2：验证码错误
+        3:新密码无效
+        6：未知错误
+    :param request:
+    :return:
+    """
     try:
         if request.method == "POST":
             email = request.POST.get('email', '')

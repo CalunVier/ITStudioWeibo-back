@@ -186,3 +186,33 @@ def upload_image(request):
             return HttpResponse(status=404)
     except:
         return HttpResponse("{\"status\":6}", status=500)
+
+
+def collect_weibo(request):
+    """
+    返回及状态说明
+        0:成功
+        2：找不到指定微博
+        4：未登录
+        6：未知错误
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == 'POST':
+            weibo_id = request.POST.get('weibo_id', '')
+            try:
+                weibo_id = int(weibo_id)
+                weibo = WeiboItem.objects.get(id=weibo_id)
+            except:
+                return HttpResponse("{\"status\":2}", status=404)
+
+            user = check_logged(request)
+            if not user:
+                return HttpResponse("{\"status\":4}", status=401)
+            user.user_info.collect_weibo.add(*weibo)
+            return HttpResponse("{\"status\":0}")
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse("{\"status\":6}", status=500)

@@ -7,5 +7,5 @@ urlpatterns = [
     url(r"^delete_weibo", delete_weibo),
     url(r"^create_weibo", create_weibo),
     url(r"^upload_img", upload_image),
-
+    url(r"^collect_weibo", collect_weibo)
 ]
