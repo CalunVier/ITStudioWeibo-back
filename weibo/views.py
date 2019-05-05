@@ -20,57 +20,65 @@ logger = logging.getLogger('my_logger.weibo.view')
 # 获取首页微博列表
 def get_item_list(request):
     """
-    :status :
-        0:正常
-        2:要求登陆
+    返回及status状态说明
+        status:
+            0:成功
+            4：未登录
+            6：未知错误
+        非GET请求不做处理，返回HTTP404
+    :param request:
+    :return:
     """
-    logger.debug('get_item_list()')
-    if request.method == 'GET':
-        logger.debug('收到post请求')
+    try:
+        logger.debug('get_item_list()')
+        if request.method == 'GET':
+            logger.debug('收到post请求')
 
-        # 读取request Query
-        page = request.GET.get('page', 1)
-        try:
-            page = int(page)
-        except:
-            page = 1
-        num = request.GET.get('num', 10)
-        try:
-            num = int(num)
-        except:
-            num = 10
+            # 读取request Query
+            page = request.GET.get('page', 1)
+            try:
+                page = int(page)
+            except:
+                page = 1
+            num = request.GET.get('num', 10)
+            try:
+                num = int(num)
+            except:
+                num = 10
 
-        tag = request.GET.get('tag', 'hot')
+            tag = request.GET.get('tag', 'hot')
 
-        # 检索数据库
-        if tag == 'follow':
-            user = check_logged(request)
-            if user:
-                # todo 优化数据库
-                followings = user.user_info.following.all()
-                weibo_db = WeiboItem.objects.none()
-                if followings:
-                    for author in followings:
-                        weibo_db = weibo_db | WeiboItem.objects.select_related('super', 'weiboinfo').filter(author=author).exclude(is_active=False)
-                weibo_db.order_by('-create_time')
+            # 检索数据库
+            if tag == 'follow':
+                user = check_logged(request)
+                if user:
+                    # todo 优化数据库
+                    followings = user.user_info.following.all()
+                    weibo_db = WeiboItem.objects.none()
+                    if followings:
+                        for author in followings:
+                            weibo_db = weibo_db | WeiboItem.objects.select_related('super', 'weiboinfo').filter(author=author).exclude(is_active=False)
+                    weibo_db.order_by('-create_time')
+                else:
+                    return HttpResponse(json.dumps({'status': 4}), status=401)
+            elif tag == 'video':
+                weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').filter(content_type=2).exclude(is_active=False)
             else:
-                return HttpResponse(json.dumps({'status': 2}), status=401)
-        elif tag == 'video':
-            weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').filter(content_type=2).exclude(is_active=False)
+                weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').exclude(is_active=False).order_by('-weiboinfo__like_num')
+
+            # 分页
+            weibo_db = page_of_queryset(weibo_db, page=page, num=num)
+
+            # 循环处理数据库中的数据
+            response_data = weibo_list_process_to_dict(request, weibo_db, page)
+
+            # 处理完毕返回列表
+            return HttpResponse(json.dumps(response_data), status=200)
         else:
-            weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').exclude(is_active=False).order_by('-weiboinfo__like_num')
-
-        # 分页
-        weibo_db = page_of_queryset(weibo_db, page=page, num=num)
-
-        # 循环处理数据库中的数据
-        response_data = weibo_list_process_to_dict(request, weibo_db, page)
-
-        # 处理完毕返回列表
-        return HttpResponse(json.dumps(response_data), status=200)
-    else:
-        # 非POST不接
-        return HttpResponse(status=404)
+            # 非GET不接
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse("{\"status\":6}")
 
 
 # 获取微博详细信息
