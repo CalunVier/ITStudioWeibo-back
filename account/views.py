@@ -111,7 +111,7 @@ def login(request):
             logger.info("收到POST请求")
 
             # 判断是否登陆
-            if 'username' not in request.session:
+            if not check_logged(request):
                 # 为兼容旧代码，构建post_body_json
                 post_body_json = {
                     'user_key': request.POST.get('email', ''),

@@ -1,6 +1,6 @@
 from account.account_lib import check_logged
 from account.models import User
-from .models import WeiboToVideo, WeiboItem, Images, WeiboToImage, Video
+from .models import WeiboToVideo, WeiboItem, Images, WeiboToImage, Video, WeiboComment
 from django.http import HttpResponse
 import pathlib
 import json
@@ -156,3 +156,11 @@ def to_create_weibo(content, user, content_type=0, imgs_id=None, video_id=None, 
             return HttpResponse("{\"status\":0}", status=200)
     except:
         return HttpResponse("{\"status\":6}")
+
+
+# 发表评论
+def create_weibo_comment(user, weibo, content):
+    comment = WeiboComment(author=user, weibo=weibo, content=content).save()
+    weibo.weiboinfo.comment_num += 1
+    weibo.weiboinfo.save()
+    return comment

@@ -3,8 +3,8 @@ from django.http import HttpResponse
 from account.account_lib import check_logged
 from account.models import User
 from ITstudioWeibo.calunvier_lib import page_of_queryset
-from .models import WeiboItem, Images, WeiboToImage, Video, WeiboToVideo
-from .weibo_lib import weibo_list_process_to_dict, to_create_weibo
+from .models import WeiboItem, Images, WeiboToImage, Video, WeiboToVideo, WeiboComment
+from .weibo_lib import weibo_list_process_to_dict, to_create_weibo, create_weibo_comment
 from django.db.models.query import QuerySet
 import json
 import pathlib
@@ -297,6 +297,45 @@ def collect_weibo(request):
                 return HttpResponse("{\"status\":4}", status=401)
             user.user_info.collect_weibo.add(*weibo)
             return HttpResponse("{\"status\":0}")
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse("{\"status\":6}", status=500)
+
+
+# 发表评论
+def comment_weibo(request):
+    """
+    返回及状态说明
+        0：成功
+        2：未找到指定微博
+        3：微博内容不满足条件
+        4：未登录
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == 'POST':
+            content = request.POST.get('content')
+            weibo_id = request.POST.get('weibo_id')
+            user = check_logged(request)
+            if not user:
+                logger.debug('未登录')
+                return HttpResponse("{\"status\":4}", status=401)
+            try:
+                weibo = WeiboItem.objects.get(id=int(weibo_id))
+            except:
+                # 未找到指定微博
+                logger.debug('未找到指定微博')
+                return HttpResponse("{\"status\":2}", status=404)
+
+            # content内容检查
+            if content and len(content) < 128:
+                create_weibo_comment(user, weibo, content)
+                return HttpResponse("{\"status\":0}")
+            else:
+                logger.debug("微博内容不满足条件")
+                return HttpResponse("{\"status\":3}", 403)
         else:
             return HttpResponse(status=404)
     except:
