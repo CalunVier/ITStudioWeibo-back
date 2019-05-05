@@ -1,8 +1,7 @@
-from django.shortcuts import render
 from django.http import HttpResponse
 from .models import UserWeiboInfo, User
 from weibo.models import WeiboItem, Images
-from .account_lib import check_password_verify, set_login_cookie, check_email_verify, to_register, check_logged, check_nickname_verify
+from .account_lib import check_password_verify, set_login_cookie, check_email_verify, to_register, check_logged, check_nickname_verify, delete_login_cookie
 from weibo.weibo_lib import weibo_list_process_to_dict
 from ITstudioWeibo.calunvier_lib import page_of_queryset
 from ITstudioWeibo.general import check_email_verify_code_not_right
@@ -167,24 +166,11 @@ def login(request):
 
 # 登出
 def logout(request):
-    if request.method == 'GET':
-        if 'user_id' in request.session:
-            logger.info(request.session['user_id']+'退出登录')
-            request.session.flush()
-            response = HttpResponse("{\"status\":\"ok\"}")
-            # todo 登出函数等待适配
-            try:
-                response.delete_cookie('sessionid')
-                response.delete_cookie('user_id')
-                response.delete_cookie('user_nick')
-            finally:
-                pass
-            return response
-        else:
-            return HttpResponse("{\"status\":\"not_logged_in\"}")
+    if check_logged(request):
+        return delete_login_cookie(request, HttpResponse())
     else:
-        # 非get不接
-        pass
+        logger.debug('未登录')
+        return HttpResponse("{\"status\":3}", status=401)
 
 
 # 修改个人资料

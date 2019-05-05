@@ -196,6 +196,14 @@ def delete_weibo(request):
             return HttpResponse("{\"status\":4}")
 
 
+# 删除评论
+def delete_comment(requset):
+    try:
+        pass
+    except:
+        return HttpResponse("{\"status\":6}", status=500)
+
+
 """POST"""
 
 

@@ -1,5 +1,6 @@
 from .models import User
 from account.models import User
+from django.http import HttpResponse
 import hashlib
 import json
 import datetime
@@ -92,6 +93,20 @@ def set_login_cookie(request, response, user):
         logger.info('登陆成功')
     except Exception:
         logger.error('登陆失败')
+
+
+# 用于登出的函数
+def delete_login_cookie(request, response):
+    response = HttpResponse()
+    try:
+        request.session.delete()
+        for key in request.COOKIES:
+            response.delete_cookie(key)
+            response.content = b'{\"status\":0}'
+            response.status_code = 200
+        return response
+    except:
+        return HttpResponse("{\"status\":6}", status=500)
 
 
 # 检查密码是否合法
