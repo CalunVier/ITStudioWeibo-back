@@ -197,10 +197,51 @@ def delete_weibo(request):
 
 
 # 删除评论
-def delete_comment(requset):
+def delete_comment(request):
+    """
+    返回及status状态说明
+        status
+            0:成功
+            2：找不到指定评论
+            3：找不到指定微博
+            4：未登录
+            5：无权限
+            6：未知错误
+            7：数据异常
+        非DELETE请求不做处理，返回404
+    :param request:
+    :return:
+    """
     try:
-        pass
+        if request.method == 'DELETE':
+            user = check_logged(request)
+            if not user:
+                logger.debug("未登录")
+                return HttpResponse("{\"status\":4}", status=401)
+            try:
+                comment = WeiboComment.objects.get(id=int(request.POST.get('comment_id', '')))
+            except:
+                logger.debug("找不到评论")
+                return HttpResponse("{\"status\":2}")
+            try:
+                weibo = WeiboItem.objects.get(id = int(request.POST.get('weibo_id', '')))
+            except:
+                logger.debug("找不到指定微博")
+                return HttpResponse("{\"status\":3}", status=406)
+            if comment.weibo == weibo:
+                if comment.author == user:
+                    comment.delete()
+                    return HttpResponse("{\"status\":0}")
+                else:
+                    logger.debug("评论作者非登陆用户")
+                    return HttpResponse("{\"status\":5}", status=403)
+            else:
+                logger.debug("微博于评论微博不匹配")
+                return HttpResponse("{\"status\":7}", status=403)
+        else:
+            return HttpResponse(status=404)
     except:
+        logger.error("未知错误")
         return HttpResponse("{\"status\":6}", status=500)
 
 
