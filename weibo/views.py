@@ -346,3 +346,42 @@ def comment_weibo(request):
             return HttpResponse(status=404)
     except:
         return HttpResponse("{\"status\":6}", status=500)
+
+
+def change_like_status(request):
+    """
+    返回及status状态说明
+        0：成功
+        2：未找到指定微博
+        4：未登录
+        6:未知错误
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == 'POST':
+            weibo_id = request.POST.get('weibo_id', '')
+            user = check_logged(request)
+            if not user:
+                logger.debug("未登录")
+                return HttpResponse("{\"status\":4}", status=401)
+            try:
+                weibo = WeiboItem.objects.select_related('weiboinfo').get(id=int(weibo_id))
+                assert weibo.is_active
+            except:
+                logger.debug("未找到指定微博")
+                return HttpResponse("{\"status\":2}")
+
+            if weibo.weiboinfo.like.filter(user):
+                weibo.weiboinfo.like.remove(user)
+                weibo.weiboinfo.like_num -= 1
+            else:
+                weibo.weiboinfo.like.add(user)
+                weibo.weiboinfo.like_num += 1
+            weibo.weiboinfo.save()
+            return HttpResponse("{\"status\":0}")
+        else:
+            return HttpResponse(status=404)
+    except:
+        logger.error("未知错误")
+        return HttpResponse("{\"status\":6}", status=500)

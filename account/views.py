@@ -369,11 +369,11 @@ def new_follow(request):
                 return HttpResponse("{\"status\":1}", status=404)
 
             if follow_user in user.user_info.following.all():
-                user.user_info.following.remove(*follow_user)
+                user.user_info.following.remove(follow_user)
                 user.user_info.follow_num -= 1
                 user.user_info.save()
             else:
-                user.user_info.following.add(*follow_user)
+                user.user_info.following.add(follow_user)
                 user.user_info.follow_num += 1
                 user.user_info.save()
             return HttpResponse("{\"status\":0}")
