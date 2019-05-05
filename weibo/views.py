@@ -47,17 +47,18 @@ def get_item_list(request):
             user = check_logged(request)
             if user:
                 # todo 优化数据库
-                followings = user.userweiboinfo_set.all()
+                followings = user.user_info.following.all()
                 weibo_db = WeiboItem.objects.none()
                 if followings:
-                    for author_info in followings:
-                        weibo_db = weibo_db | WeiboItem.objects.select_related('super', 'weiboinfo').filter(author=author_info.user)
+                    for author in followings:
+                        weibo_db = weibo_db | WeiboItem.objects.select_related('super', 'weiboinfo').filter(author=author).exclude(is_active=False)
+                weibo_db.order_by('-create_time')
             else:
                 return HttpResponse(json.dumps({'status': 2}), status=401)
         elif tag == 'video':
-            weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').filter(content_type=2)
+            weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').filter(content_type=2).exclude(is_active=False)
         else:
-            weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').all().order_by('-weiboinfo__like_num')
+            weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').exclude(is_active=False).order_by('-weiboinfo__like_num')
 
         # 分页
         weibo_db = page_of_queryset(weibo_db, page=page, num=num)
@@ -72,6 +73,7 @@ def get_item_list(request):
         return HttpResponse(status=404)
 
 
+# 获取微博详细信息
 def get_weibo_info(request):
     """
     返回及status说明
@@ -87,6 +89,7 @@ def get_weibo_info(request):
             try:
                 weibo_id = int(weibo_id)
                 item = WeiboItem.objects.get(id = weibo_id)
+                assert item.is_active
             except:
                 return HttpResponse("{\"status\":3}", status=404)
             item_data = {
@@ -273,6 +276,7 @@ def upload_image(request):
         return HttpResponse("{\"status\":6}", status=500)
 
 
+# 收藏微博
 def collect_weibo(request):
     """
     返回及状态说明
@@ -289,6 +293,7 @@ def collect_weibo(request):
             try:
                 weibo_id = int(weibo_id)
                 weibo = WeiboItem.objects.get(id=weibo_id)
+                assert weibo.is_active
             except:
                 return HttpResponse("{\"status\":2}", status=404)
 
@@ -324,6 +329,7 @@ def comment_weibo(request):
                 return HttpResponse("{\"status\":4}", status=401)
             try:
                 weibo = WeiboItem.objects.get(id=int(weibo_id))
+                assert weibo.is_active
             except:
                 # 未找到指定微博
                 logger.debug('未找到指定微博')

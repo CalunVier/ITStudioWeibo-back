@@ -144,7 +144,7 @@ def check_nickname_verify(nickname):
 # 检查是否登陆
 def check_logged(request) -> User:
     if 'username' in request.COOKIES:   # 检查username是否存在于COOKIE
-        if time.time()-request.COOKIES.get('login_time', 0) < 86400: # 检查登陆是否过期
+        if time.time()-request.session.get('login_time', 0) < 86400: # 检查登陆是否过期
             # 检查登陆是否异常
             if request.COOKIES.get('username') and request.COOKIES.get('username') == request.session.get('username', ''):
                 # 检查是否存在于数据库

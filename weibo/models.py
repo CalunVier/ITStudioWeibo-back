@@ -41,6 +41,7 @@ class WeiboItem(models.Model):
     content = models.CharField(max_length=150, verbose_name='内容')
     super = models.ForeignKey('WeiboItem', null=True, blank=True, on_delete=models.CASCADE, verbose_name='转发自微博')
     content_type = models.IntegerField(choices=type_choices, default=0, verbose_name='微博类型')
+    is_active = models.BooleanField(default=True, verbose_name='激活')
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):

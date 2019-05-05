@@ -131,7 +131,7 @@ def login(request):
                 # 查询用户，获取用户数据库对象
                 user = User.objects.filter(email=post_body_json['user_key'])
 
-                if user:
+                if user and user[0].is_active:
                     # 检索到用户
                     logger.info('检索到用户'+post_body_json['user_key'])
                     user = user[0]
@@ -461,16 +461,12 @@ def get_user_home(request):
     """
     返回及status状态说明
         0:正常
-        1：未知用户
         2：未登录
     对于非GET请求不做处理，返回Http状态404
     """
     if request.method == 'GET':
-        if check_logged(request):
-            try:
-                user = User.objects.select_related('userweiboinfo').get(username=request.COOKIES.get('username'))
-            except:
-                return HttpResponse("{\"status\":1}",status=404)
+        user = check_logged(request)
+        if user:
             response_data = {
                 "user_head": user.head.url,     # 头像
                 "user_name": user.nick,         # 用户昵称
@@ -507,6 +503,7 @@ def user_info(request):
             user_id = request.GET.get("user_id")
             try:
                 user = User.objects.get(username=user_id)
+                assert user.is_active
             except:
                 return HttpResponse("{\"status\":1}",status=404)
             response_data = {
@@ -547,14 +544,14 @@ def my_weibo_list(request):
                 page = int(page)
                 num = int(num)
             except:
-                # 分页数据错误 todo 查到相关http状态码
-                return HttpResponse("{\"status\":4}", 500)
+                # 分页数据错误
+                return HttpResponse("{\"status\":4}", 406)
 
             # 获取用户对象
             try:
                 user = User.objects.get(username=user_id)
+                assert user.is_active
             except:
-                # todo 填写返回
                 logger.debug("未知用户")
                 return HttpResponse("{\"status\":1}", status=404)
             # 判断tag是否有内容
@@ -566,8 +563,8 @@ def my_weibo_list(request):
             elif tag == 'personalweibo':
                 weibo_db = WeiboItem.objects.filter(author=user, super=None)
             else:
-                # 未定义的tag标签 todo 查询相关http状态码
-                return HttpResponse("{\"status\":3}", status=400)
+                # 未定义的tag标签
+                return HttpResponse("{\"status\":3}", status=406)
             # 分页
             weibo_db = page_of_queryset(weibo_db, page, num)
             response_dict = weibo_list_process_to_dict(request, weibo_db, page)
