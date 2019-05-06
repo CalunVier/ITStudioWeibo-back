@@ -12,7 +12,7 @@ urlpatterns = [
     url(r"^my_weibo_list", my_weibo_list),
     url(r'^change_password', change_password),
     url(r'^change_head', change_head),
-    url(r'^change_nick', change_nick),
+    url(r'^change_nick', change_username),
     url(r'^new_follow', new_follow),
     url(r"^forgot_password", forgot_password),
     url(r'^following_list', following_list),

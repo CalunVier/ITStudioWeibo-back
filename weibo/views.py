@@ -449,6 +449,32 @@ def upload_image(request):
         return HttpResponse("{\"status\":6}", status=500)
 
 
+# 上传视频
+def upload_video(request):
+    """
+    返回及状态说明
+        0：成功
+        6：未知错误
+        7：未发现上传的图片
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == 'POST':
+            try:
+                video = request.FILES['image']
+            except:
+                logger.debug("没有发现上传的视频")
+                return HttpResponse("{\"status\":7}", status=204)
+            video_db = Video(video=video)
+            video_db.save()
+            return HttpResponse(json.dumps({'video_id': video_db.video_id, 'status': 0}, status=201))
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse("{\"status\":6}", status=500)
+
+
 # 收藏微博
 def collect_weibo(request):
     """

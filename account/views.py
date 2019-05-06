@@ -310,26 +310,27 @@ def change_head(request):
         return HttpResponse("{\"status\":6}", status=500)
 
 
-def change_nick(request):
+def change_username(request):
     """
     返回及status状态说明
         0:成功
         3：昵称不合法
         4：未登录
+        5:用户名重复
         6：未知错误
     :param request:
     :return:
     """
     try:
-        nick = request.POST.get('name', '')
+        username = request.POST.get('name', '')
 
         user = check_logged(request)
         if not user:
             return HttpResponse("{\"status\":4}", status=401)
 
-        if check_user_id_verify(nick):
-            if not User.objects.filter(username=nick):
-                user.username = nick
+        if check_user_id_verify(username):
+            if not User.objects.filter(username=username):
+                user.username = username
                 user.save()
                 return HttpResponse("{\"status\":0}")
             else:
@@ -603,7 +604,7 @@ def following_list(request):
             response_list = []
             for fu in following_user_db:
                 response_list.append({
-                    "user_name": fu.username,
+                    "user_id": fu.username,
                     "user_head": fu.head.url,
                     "user_info": fu.intro
                 })
@@ -644,7 +645,7 @@ def followers_list(request):
             response_list = []
             for fi in followers_info_db:
                 response_list.append({
-                    "user_name": fi.user.username,
+                    "user_id": fi.user.username,
                     "user_head": fi.user.head.url,
                     "user_info": fi.user.intro
                 })
