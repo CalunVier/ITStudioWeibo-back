@@ -170,6 +170,16 @@ def get_weibo_info(request):
 
 # 转发/评论列表
 def comment_like_list(request):
+    """
+    返回及状态说明
+        status:
+            0:成功
+            2:未找到指定微博
+            3：未定义的tag
+            6：未知错误
+    :param request:
+    :return:
+    """
     try:
         if request.method == 'GET':
             # 获取分页信息
@@ -207,7 +217,7 @@ def comment_like_list(request):
                         "comment_id": comment.id
                     }
                     response_list.append(comment_dict)
-                return HttpResponse(json.dumps({"page": page, "list": response_list}))
+                return HttpResponse(json.dumps({"page": page, "list": response_list, "status": 0}))
             elif tag == 'forward':
                 # 检索数据库，为方便复制代码，变量名为comment
                 comments = WeiboItem.objects.select_related('author').filter(super=weibo).exclude(is_active=False)
@@ -223,7 +233,7 @@ def comment_like_list(request):
                         "comment_id": comment.id
                     }
                     response_list.append(comment_dict)
-                return HttpResponse(json.dumps({"page": page, "list": response_list}))
+                return HttpResponse(json.dumps({"page": page, "list": response_list, "status": 0}))
             else:
                 logger.debug("未定义的tag")
                 return HttpResponse(status_str % 3, status=406)

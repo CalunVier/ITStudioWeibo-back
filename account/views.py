@@ -451,6 +451,7 @@ def get_user_home(request):
     对于非GET请求不做处理，返回Http状态404
     """
     if request.method == 'GET':
+        logger.debug(request.COOKIES)
         user = check_logged(request)
         if user:
             response_data = {
