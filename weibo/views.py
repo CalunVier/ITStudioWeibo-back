@@ -8,6 +8,7 @@ from .weibo_lib import weibo_list_process_to_dict, to_create_weibo, create_weibo
 from django.db.models.query import QuerySet
 import json
 import pathlib
+import re
 import logging
 
 
@@ -256,7 +257,7 @@ def liker_list(request):
     try:
         if request.method == 'GET':
             try:
-                weibo = WeiboItem.objects.get(int(request.GET.get('weibo_id', '')))
+                weibo = WeiboItem.objects.select_related('weiboinfo').get(int(request.GET.get('weibo_id', '')))
             except:
                 logger.debug("找不到指定微博")
                 return HttpResponse(status_str % 2, status=404)
@@ -525,6 +526,7 @@ def comment_weibo(request):
         return HttpResponse("{\"status\":6}", status=500)
 
 
+# 改变like微博的状态
 def change_like_status(request):
     """
     返回及status状态说明

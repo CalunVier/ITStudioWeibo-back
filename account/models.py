@@ -13,6 +13,7 @@ class UserWeiboInfo(models.Model):
     fans_num = models.IntegerField(default=0, verbose_name=u'喜欢的人')
     weibo_num = models.IntegerField(default=0, verbose_name=u'微博数量')
     collect_weibo = models.ManyToManyField('weibo.WeiboItem', related_name='collect_weibo', verbose_name=u'收藏微博')
+    gallery = models.ManyToManyField('weibo.Images', related_name='owner', verbose_name=u'相册')
 
 
 class User(AbstractUser):

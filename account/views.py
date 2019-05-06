@@ -14,6 +14,7 @@ import string
 
 # todo 解决删除用户再注册的问题
 logger = logging.getLogger('my_logger.account.view')
+status_str = '{"status": %d}'
 
 """POST"""
 
@@ -561,3 +562,76 @@ def my_weibo_list(request):
     except:
         logger.error("未知错误")
         return HttpResponse("{\"status\":6}")
+
+
+# 我关注的人
+def following_list(request):
+    """
+    返回及status状态说明
+        status
+            0:成功
+            4：未登陆
+            6：未知错误
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == 'GET':
+            try:
+                page = int(request.GET.get('page', 1))
+            except:
+                page = 1
+            try:
+                num = int(request.GET.get('num', 10))
+            except:
+                num = 10
+            user = check_logged(request)
+            if not user:
+                logger.debug("未登录")
+                return HttpResponse('{"status":4}', status=401)
+            following_user_db = user.user_info.following.all()
+            page_of_queryset(following_user_db, page, num)
+            response_list = []
+            for fu in following_user_db:
+                response_list.append({
+                    "user_name": fu.username,
+                    "user_head": fu.head.url,
+                    "user_info": fu.intro
+                })
+            return HttpResponse(json.dumps({'page':page, 'list':response_list, 'status': 0}))
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse("{\"status\":6}", status=500)
+
+
+# 获取相册
+def get_gallery(request):
+    """
+    返回及status状态说明
+        status
+            0：成功
+            1：位置用户
+            6：未知错误
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == 'GET':
+            try:
+                user = User.objects.get(username=request.GET.get('user_id', ''))
+            except:
+                return HttpResponse(status_str % 1, status=404)
+            time = re.match(r'^(\d+)-(\d+)', request.GET.get('time', ''))
+            if not time or not (0 < int(time.group(2)) < 13 and 1970 < int(time.group(1)) < 2020):
+                logger.debug("错误的日期")
+                return HttpResponse(status_str % 3, status=406)
+            gallery = user.user_info.gallery.filter(upload_time__year=int(time.group(1)), upload_time__month=int(time.group(2)))
+            response_list = []
+            for img in gallery:
+                response_list.append({'url': img.image.url, 'time': img.upload_time.timestamp()})
+            return HttpResponse(json.dumps({'list': response_list, 'status': 0}))
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse(status_str % 6, status=500)

@@ -120,7 +120,9 @@ def to_create_weibo(content, user, content_type=0, imgs_id=None, video_id=None, 
                 imgs_db = Images.objects.none()
                 for img_id in imgs_id:
                     try:
-                        imgs_db = imgs_db | Images.objects.get(image_id=img_id)
+                        image = Images.objects.get(image_id=img_id)
+                        imgs_db = imgs_db | image
+                        user.user_info.gallery.add(image)
                     except:
                         pass
 
@@ -134,7 +136,7 @@ def to_create_weibo(content, user, content_type=0, imgs_id=None, video_id=None, 
             # 没有检测到上传的图片信息，更正微博类型为0，并保存微博
             weibo.content_type = 0
             weibo.save()
-            return HttpResponse(json.dumps({"status": "0","info": "We didn't find any picture, changed type to \"text\"."}))
+            return HttpResponse(json.dumps({"status": "0", "info": "We didn't find any picture, changed type to \"text\"."}))
         elif content_type == 2:
             if video_id:
                 try:
