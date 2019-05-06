@@ -243,6 +243,51 @@ def comment_like_list(request):
         HttpResponse("{\"status\":6}", status=500)
 
 
+def liker_list(request):
+    """
+    返回及状态说明
+        status
+            0：成功
+            2: 找不到指定微博
+            6：未知错误
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == 'GET':
+            try:
+                weibo = WeiboItem.objects.get(int(request.GET.get('weibo_id', '')))
+            except:
+                logger.debug("找不到指定微博")
+                return HttpResponse(status_str % 2, status=404)
+
+            # 获取分页信息
+            try:
+                page = int(request.GET.get('page', 1))
+            except:
+                page = 1
+            try:
+                num = int(request.GET.get('num', 10))
+            except:
+                num = 10
+
+            # 检索数据库
+            like_db = weibo.weiboinfo.like.all().reverse()
+            like_db = page_of_queryset(like_db, page, num)
+            response_list = []
+            for liker in like_db:
+                response_list.append({
+                   "user_id": liker.username,
+                   "user_name": liker.nick,
+                   "user_info": liker.intro
+                })
+            return HttpResponse(json.dumps({"page": page, 'list':response_list, 'status': 0}))
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse(status_str % 6, status=500)
+
+
 """DELETE"""
 
 

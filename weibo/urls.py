@@ -13,4 +13,5 @@ urlpatterns = [
     url(r"^like", change_like_status),
     url(r"^delete_comment", delete_comment),
     url(r"^comments_list", comment_like_list),
+    url(r'^like_list', liker_list),
 ]
