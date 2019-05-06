@@ -16,5 +16,6 @@ urlpatterns = [
     url(r'^new_follow', new_follow),
     url(r"^forgot_password", forgot_password),
     url(r'^following_list', following_list),
-    url(r'^get_gallery', get_gallery)
+    url(r'^get_gallery', get_gallery),
+    url(r'^followers', followers_list)
 ]

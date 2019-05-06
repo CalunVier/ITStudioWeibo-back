@@ -589,8 +589,8 @@ def following_list(request):
             if not user:
                 logger.debug("未登录")
                 return HttpResponse('{"status":4}', status=401)
-            following_user_db = user.user_info.following.all()
-            page_of_queryset(following_user_db, page, num)
+            following_user_db = user.user_info.following.exclude(is_active=False)
+            following_user_db = page_of_queryset(following_user_db, page, num)
             response_list = []
             for fu in following_user_db:
                 response_list.append({
@@ -599,6 +599,47 @@ def following_list(request):
                     "user_info": fu.intro
                 })
             return HttpResponse(json.dumps({'page':page, 'list':response_list, 'status': 0}))
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse("{\"status\":6}", status=500)
+
+
+# 关注我的人
+def followers_list(request):
+    """
+    返回及status状态说明
+        status
+            0:成功
+            4：未登陆
+            6：未知错误
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == 'GET':
+            try:
+                page = int(request.GET.get('page', 1))
+            except:
+                page = 1
+            try:
+                num = int(request.GET.get('num', 10))
+            except:
+                num = 10
+            user = check_logged(request)
+            if not user:
+                logger.debug("未登录")
+                return HttpResponse('{"status":4}', status=401)
+            followers_info_db = user.followers.select_related('user').exclude(user__is_active=False)
+            followers_info_db =page_of_queryset(followers_info_db, page, num)
+            response_list = []
+            for fi in followers_info_db:
+                response_list.append({
+                    "user_name": fi.user.username,
+                    "user_head": fi.user.head.url,
+                    "user_info": fi.user.intro
+                })
+            return HttpResponse(json.dumps({'page': page, 'list': response_list, 'status': 0}))
         else:
             return HttpResponse(status=404)
     except:
