@@ -11,5 +11,6 @@ urlpatterns = [
     url(r"^info", get_weibo_info),
     url(r"^create_comment", comment_weibo),
     url(r"^like", change_like_status),
-    url(r"delete_comment", delete_comment),
+    url(r"^delete_comment", delete_comment),
+    url(r"^comments_list", comment_like_list),
 ]

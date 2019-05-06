@@ -12,7 +12,7 @@ import logging
 
 
 logger = logging.getLogger('my_logger.weibo.view')
-
+status_str = '{"status":%d}'
 
 """GET"""
 
@@ -166,6 +166,71 @@ def get_weibo_info(request):
             return HttpResponse(status=404)
     except:
         return HttpResponse("{\"status\":6}", status=500)
+
+
+# 转发/评论列表
+def comment_like_list(request):
+    try:
+        if request.method == 'GET':
+            # 获取分页信息
+            try:
+                page = int(request.GET.get("page", 1))
+            except:
+                page = 1
+            try:
+                num = int(request.GET.get("num", 10))
+            except:
+                num = 10
+
+            # 获取微博对象
+            try:
+                weibo = WeiboItem.objects.get(id=int(request.GET.get('weibo_id', '')))
+                assert weibo.is_active
+            except:
+                logger.debug("未找到指定微博")
+                return HttpResponse("{\"status\":2}", status=404)
+            # 获取标签信息
+            tag = request.GET.get('tag', '')
+
+            if tag == 'comment':
+                # 评论列表  检索数据库
+                comments = WeiboComment.objects.select_related('author').filter(weibo=weibo).order_by('-ctime')
+                # 分页
+                comments = page_of_queryset(comments, page, num)
+                response_list = []
+                for comment in comments:
+                    comment_dict = {
+                        "user_id": comment.author.username,
+                        "user_head": comment.author.head.url,
+                        "user_name": comment.author.nick,
+                        "time": comment.ctime.timestamp(),
+                        "comment_id": comment.id
+                    }
+                    response_list.append(comment_dict)
+                return HttpResponse(json.dumps({"page": page, "list": response_list}))
+            elif tag == 'forward':
+                # 检索数据库，为方便复制代码，变量名为comment
+                comments = WeiboItem.objects.select_related('author').filter(super=weibo).exclude(is_active=False)
+                # 分页
+                comments = page_of_queryset(comments, page, num)
+                response_list = []
+                for comment in comments:
+                    comment_dict = {
+                        "user_id": comment.author.username,
+                        "user_head": comment.author.head.url,
+                        "user_name": comment.author.nick,
+                        "time": comment.create_time.timestamp(),
+                        "comment_id": comment.id
+                    }
+                    response_list.append(comment_dict)
+                return HttpResponse(json.dumps({"page": page, "list": response_list}))
+            else:
+                logger.debug("未定义的tag")
+                return HttpResponse(status_str % 3, status=406)
+        else:
+            return HttpResponse(status=404)
+    except:
+        HttpResponse("{\"status\":6}", status=500)
 
 
 """DELETE"""

@@ -57,7 +57,7 @@ class WeiboItem(models.Model):
 
 # 微博评论表
 class WeiboComment(models.Model):
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    author = models.ForeignKey('account.User', on_delete=models.CASCADE)
     weibo = models.ForeignKey(WeiboItem, related_name='comments', on_delete=models.CASCADE)
     content = models.CharField(max_length=128, verbose_name=u'内容')
     ctime = models.DateTimeField(auto_now=True)
