@@ -19,7 +19,6 @@ def weibo_list_process_to_dict(request, weibo_db, page):
             "type": 'text' if item.content_type == 0 else 'image' if item.content_type == 1 else 'video',
             "content": item.content,
             "author_id": item.author.username,
-            "author_name": item.author.nick,
             "author_head": item.author.head.url,
             "forward_num": item.weiboinfo.forward_num,
             "comment_num": item.weiboinfo.comment_num,
@@ -34,7 +33,6 @@ def weibo_list_process_to_dict(request, weibo_db, page):
             item_data["super_weibo"] = {
                 'weibo_id': item.super.id,
                 'content': item.super.content,
-                'author_name': item.super.author.nick,
                 'author_id': item.super.author.id,
             }
         else:

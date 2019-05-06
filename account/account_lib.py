@@ -13,7 +13,7 @@ logger = logging.getLogger('my_logger.account.lib')
 
 
 # 注册
-def to_register(username, nick, password, email):
+def to_register(username, password, email):
     """
     返回值
         0:注册成功
@@ -27,7 +27,7 @@ def to_register(username, nick, password, email):
         if User.objects.filter(email=email):
             logger.info('邮箱重复')
             return 2, None
-        user = User(username=username, password=password, email=email, nick=nick)
+        user = User(username=username, password=password, email=email)
         user.save()
         return 0, user
     except Exception:

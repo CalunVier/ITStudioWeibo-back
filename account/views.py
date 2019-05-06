@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from .models import UserWeiboInfo, User
 from weibo.models import WeiboItem, Images
-from .account_lib import check_password_verify, set_login_cookie, check_email_verify, to_register, check_logged, check_nickname_verify, delete_login_cookie
+from .account_lib import check_user_id_verify, check_password_verify, set_login_cookie, check_email_verify, to_register, check_logged, check_nickname_verify, delete_login_cookie
 from weibo.weibo_lib import weibo_list_process_to_dict
 from ITstudioWeibo.calunvier_lib import page_of_queryset
 from ITstudioWeibo.general import check_email_verify_code_not_right
@@ -25,10 +25,12 @@ def register(request):
     返回及status状态返回说明
     接收到POST请求时：
         0: 注册成功
-        1：用户ID重复(失效)
+        1：用户ID重复
         2：邮箱重复
         3:验证码错误
         5：无效的密码
+        6:未知错误
+        7:用户id无效
         10：无效的邮箱
     非POST请求不做处理，返回HTTP状态404
     """
@@ -37,11 +39,15 @@ def register(request):
             logger.debug('收到post请求')
 
             # 随机生成用户名
-            while True:
-                username = ''.join(random.sample(string.ascii_lowercase, 8))
-                u_db = User.objects.filter(username=username)
-                if not u_db:
-                    break
+            # while True:
+            #     username = ''.join(random.sample(string.ascii_lowercase, 8))
+            #     u_db = User.objects.filter(username=username)
+            #     if not u_db:
+            #         break
+
+            username = request.POST.get('user_id', '')
+            if not check_user_id_verify(username):
+                return HttpResponse(status_str % 7, status=403)
 
             # 为了兼容旧代码 构建post_body_json
             post_body_json = {
@@ -69,8 +75,7 @@ def register(request):
 
                 # 写入数据库
                 logger.info('将注册信息写入数据库')
-                result, user = to_register(post_body_json['username'], post_body_json['username'],
-                                           post_body_json['password'], post_body_json['email'])
+                result, user = to_register(post_body_json['username'], post_body_json['password'], post_body_json['email'])
                 # 返回结果
                 if not result:
                     # 注册成功
@@ -322,10 +327,14 @@ def change_nick(request):
         if not user:
             return HttpResponse("{\"status\":4}", status=401)
 
-        if check_nickname_verify(nick):
-            user.nick = nick
-            user.save()
-            return HttpResponse("{\"status\":0}")
+        if check_user_id_verify(nick):
+            if not User.objects.filter(username=nick):
+                user.username = nick
+                user.save()
+                return HttpResponse("{\"status\":0}")
+            else:
+                logger.info('用户名重复')
+                return HttpResponse(status_str % 5, status=403)
         else:
             return HttpResponse("{\"status\":3}", status=403)
     except:
@@ -433,7 +442,6 @@ def user_weibo_info(request):
             return HttpResponse("{\"status\":1}", status=403)
         response_data = {
             "user_head": user.head.url,
-            "user_name": user.nick,
             "follow_num": user_info_db.follow_num,
             "fans_num": user_info_db.funs_num,
             "status": 0
@@ -457,7 +465,6 @@ def get_user_home(request):
         if user:
             response_data = {
                 "user_head": user.head.url,     # 头像
-                "user_name": user.nick,         # 用户昵称
                 "user_info": user.intro,        # 用户简介
                 "follow_num": user.user_info.follow_num,    # follow数量
                 "weibo_num": user.user_info.weibo_num,      # 微博数量
@@ -545,11 +552,13 @@ def my_weibo_list(request):
             # 判断tag是否有内容
             if tag == 'like':
                 # 检索数据库
-                weibo_db = user.like_weibo.all()
+                weibo_db = user.like_weibo.all().exclude(is_active=False)
             elif tag == 'collect':
-                weibo_db = user.user_info.collect_weibo.all()
-            elif tag == 'personalweibo':
-                weibo_db = WeiboItem.objects.filter(author=user, super=None)
+                weibo_db = user.user_info.collect_weibo.all().exclude(is_active=False)
+            elif tag == 'original':
+                weibo_db = WeiboItem.objects.filter(author=user, super=None).exclude(is_active=False)
+            elif tag == 'my_weibo':
+                weibo_db = WeiboItem.objects.filter(author=user).exclude(is_active=False)
             else:
                 # 未定义的tag标签
                 return HttpResponse("{\"status\":3}", status=406)

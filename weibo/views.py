@@ -71,10 +71,10 @@ def get_item_list(request):
             weibo_db = page_of_queryset(weibo_db, page=page, num=num)
 
             # 循环处理数据库中的数据
-            response_data = weibo_list_process_to_dict(request, weibo_db, page)
+            response_dict = weibo_list_process_to_dict(request, weibo_db, page)
 
             # 处理完毕返回列表
-            return HttpResponse(json.dumps(response_data), status=200)
+            return HttpResponse(json.dumps(response_dict), status=200)
         else:
             # 非GET不接
             return HttpResponse(status=404)
@@ -106,7 +106,6 @@ def get_weibo_info(request):
                 "content": item.content,
                 "weibo_id": weibo_id,
                 "author_id": item.author.username,
-                "author_name": item.author.nick,
                 "author_head": item.author.head.url,
                 "forward_num": item.weiboinfo.forward_num,
                 "comment_num": item.weiboinfo.comment_num,
@@ -121,7 +120,6 @@ def get_weibo_info(request):
                 item_data["super_weibo"] = {
                     'weibo_id': item.super.id,
                     'content': item.super.content,
-                    'author_name': item.super.author.nick,
                     'author_id': item.super.author.id,
                 }
             else:
@@ -213,7 +211,6 @@ def comment_like_list(request):
                     comment_dict = {
                         "user_id": comment.author.username,
                         "user_head": comment.author.head.url,
-                        "user_name": comment.author.nick,
                         "time": comment.ctime.timestamp(),
                         "comment_id": comment.id
                     }
@@ -229,7 +226,6 @@ def comment_like_list(request):
                     comment_dict = {
                         "user_id": comment.author.username,
                         "user_head": comment.author.head.url,
-                        "user_name": comment.author.nick,
                         "time": comment.create_time.timestamp(),
                         "comment_id": comment.id
                     }
@@ -279,7 +275,6 @@ def liker_list(request):
             for liker in like_db:
                 response_list.append({
                    "user_id": liker.username,
-                   "user_name": liker.nick,
                    "user_info": liker.intro
                 })
             return HttpResponse(json.dumps({"page": page, 'list':response_list, 'status': 0}))

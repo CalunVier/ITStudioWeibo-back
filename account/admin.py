@@ -3,7 +3,7 @@ from .models import User, UserWeiboInfo
 
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user_name', 'email', 'nick', 'is_active', 'user_info_weibo_num', 'user_info_funs_num']
+    list_display = ['id', 'user_name', 'email', 'is_active', 'user_info_weibo_num', 'user_info_funs_num']
     actions = ['de_active_user', 'to_active_user']
     list_display_links = ['user_name']
     list_select_related = ['user_info']
