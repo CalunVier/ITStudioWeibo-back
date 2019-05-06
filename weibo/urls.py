@@ -14,4 +14,6 @@ urlpatterns = [
     url(r"^delete_comment", delete_comment),
     url(r"^comments_list", comment_like_list),
     url(r'^like_list', liker_list),
+    url(r'^change_notice_read', change_notice_read),
+    url(r'^notice_list', get_notice_list),
 ]

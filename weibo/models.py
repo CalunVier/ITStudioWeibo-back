@@ -67,9 +67,18 @@ class WeiboComment(models.Model):
 
 # 消息表
 class Notice(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='用户')
+    type_choice = (
+        (0, '文本'),
+        (1, '@'),
+        (2, '官方推送')
+    )
+    sender = models.ForeignKey('account.User', verbose_name='发件人')
+    recipient = models.ForeignKey('account.User', verbose_name='收件人')
     notice = models.CharField(max_length=128, verbose_name='通知内容')
-    new = models.BooleanField(default=True, verbose_name='是否为新消息')
+    n_type = models.IntegerField(choices=type_choice, verbose_name='消息类型')
+    read = models.BooleanField(default=False, verbose_name='是否为新消息')
+    time = models.DateTimeField(auto_now=True, verbose_name=u'时间')
+    other = models.CharField(max_length=256, verbose_name='备注')
 
 
 # 微博_图片表

@@ -1,10 +1,10 @@
 from account.account_lib import check_logged
 from account.models import User
-from .models import WeiboToVideo, WeiboItem, Images, WeiboToImage, Video, WeiboComment
+from .models import WeiboToVideo, Notice, WeiboItem, Images, WeiboToImage, Video, WeiboComment
 from django.http import HttpResponse
-import pathlib
 import json
 import logging
+import re
 
 
 logger = logging.getLogger("my_logger.weibo.lib")
@@ -111,6 +111,7 @@ def to_create_weibo(content, user, content_type=0, imgs_id=None, video_id=None, 
             except:
                 return HttpResponse("{\"status\":5}", status=500)
         weibo.save()
+        at_notice_catcher(user, content, weibo.id)
         user.user_info.weibo_num += 1
         user.user_info.save()
         if content_type == 1:
@@ -164,3 +165,40 @@ def create_weibo_comment(user, weibo, content):
     weibo.weiboinfo.comment_num += 1
     weibo.weiboinfo.save()
     return comment
+
+
+# 捕获@内容
+def at_notice_catcher(sender, content, weibo_id):
+    at_list = re.findall(r'@(\w+) ', content)
+    for username in at_list:
+        try:
+            recipient = User.objects.get(username=username)
+            Notice(sender=sender, recipient=recipient, n_type=1, notice='%s在微博中提到了你' % sender.username, other=json.dumps({'weibo_id': weibo_id})).save()
+        except:
+            pass
+
+
+def process_notice_to_list(notice_db):
+    response_list = []
+    for n in notice_db:
+        if n.n_type == 1:
+            pass
+        else:
+            response_list.append({
+                'type': 1,
+                'notice_id': n.id,
+                'content': n.content,
+                'read': n.read,
+                'time': n.time.timestamp(),
+                'weibo_id': json.loads(n.other).get('weibo_id', ''),
+                'sender_id': n.sender.username
+            })
+            response_list.append({
+                'type': 0,
+                'notice_id': n.id,
+                'content': n.content,
+                'read': n.read,
+                'time': n.time.timestamp(),
+                'sender_id': n.sender.username
+            })
+    return response_list

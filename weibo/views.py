@@ -3,12 +3,13 @@ from django.http import HttpResponse
 from account.account_lib import check_logged
 from account.models import User
 from ITstudioWeibo.calunvier_lib import page_of_queryset
-from .models import WeiboItem, Images, WeiboToImage, Video, WeiboToVideo, WeiboComment
-from .weibo_lib import weibo_list_process_to_dict, to_create_weibo, create_weibo_comment
+from .models import WeiboItem, Images, WeiboToImage, Video, WeiboToVideo, WeiboComment, Notice
+from .weibo_lib import weibo_list_process_to_dict, to_create_weibo, create_weibo_comment, process_notice_to_list
 from django.db.models.query import QuerySet
 import json
 import pathlib
 import re
+import datetime
 import logging
 
 
@@ -240,6 +241,7 @@ def comment_like_list(request):
         HttpResponse("{\"status\":6}", status=500)
 
 
+# 获取点赞人员列表
 def liker_list(request):
     """
     返回及状态说明
@@ -278,6 +280,42 @@ def liker_list(request):
                    "user_info": liker.intro
                 })
             return HttpResponse(json.dumps({"page": page, 'list':response_list, 'status': 0}))
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse(status_str % 6, status=500)
+
+
+# 获取消息列表
+def get_notice_list(request):
+    """
+    返回及状态说明
+        status
+            0:成功
+            4：未登录
+            6：未知错误
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == 'GET':
+            try:
+                time = datetime.datetime.fromtimestamp(float(request.GET.get('time', '')))
+            except:
+                time = None
+            user = check_logged(request)
+            if not user:
+                logger.debug("未登录")
+                return HttpResponse(status_str % 4, status=401)
+            if time:
+                # 检索数据库
+                ns_db = Notice.objects.select_related('sender').filter(recipient=user, time__gt=time)
+                response_list = process_notice_to_list(ns_db)
+                return HttpResponse(json.dumps({'list': response_list, 'status':0}))
+            else:
+                ns_db = Notice.objects.all()
+                response_list = process_notice_to_list(ns_db)
+                return HttpResponse(json.dumps({'list': response_list, 'status': 0}))
         else:
             return HttpResponse(status=404)
     except:
@@ -585,3 +623,28 @@ def change_like_status(request):
     except:
         logger.error("未知错误")
         return HttpResponse("{\"status\":6}", status=500)
+
+
+# 改变notice的阅读状态
+def change_notice_read(request):
+    try:
+        if request.method == 'POST':
+            user = check_logged(request)
+            if not user:
+                logger.debug("未登录")
+                return HttpResponse(status_str % 4, status=401)
+            try:
+                n = Notice.objects.get(id=int(request.POST.get('notice_id', '')))
+            except:
+                logger.debug("未找到指定消息")
+                return HttpResponse(status_str % 2, status=404)
+            if n.recipient == user:
+                n.read = True
+                n.save()
+            else:
+                logger.debug('权限不足')
+                return HttpResponse(status_str % 5, status='403')
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse(status_str % 6, status=500)
