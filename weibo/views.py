@@ -37,14 +37,12 @@ def get_item_list(request):
             logger.debug('收到post请求')
 
             # 读取request Query
-            page = request.GET.get('page', 1)
             try:
-                page = int(page)
+                page = int(request.GET.get('page', 1))
             except:
                 page = 1
-            num = request.GET.get('num', 10)
             try:
-                num = int(num)
+                num = int(request.GET.get('num', 10))
             except:
                 num = 10
 
@@ -443,7 +441,7 @@ def create_weibo(request):
         super_weibo_id = int(super_weibo_id)
     except:
         # 父微博ID非数字
-        return HttpResponse("{\"status\":7}")
+        super_weibo_id = None
 
     try:
         pictures = json.dumps(pictures)
