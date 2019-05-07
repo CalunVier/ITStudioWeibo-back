@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from .models import UserWeiboInfo, User
 from weibo.models import WeiboItem, Images
-from .account_lib import check_user_id_verify, check_password_verify, set_login_cookie, check_email_verify, to_register, check_logged, check_nickname_verify, delete_login_cookie
+from .account_lib import check_user_id_verify, check_password_verify, set_login_cookie, check_email_verify, to_register, check_logged, delete_login_cookie
 from weibo.weibo_lib import weibo_list_process_to_dict
 from ITstudioWeibo.calunvier_lib import page_of_queryset
 from ITstudioWeibo.general import check_email_verify_code_not_right
@@ -12,7 +12,6 @@ import datetime
 import re
 import string
 
-# todo 解决删除用户再注册的问题
 logger = logging.getLogger('my_logger.account.view')
 status_str = '{"status": %d}'
 
