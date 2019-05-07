@@ -423,11 +423,11 @@ def create_weibo(request):
     :param request:
     :return:
     """
-    content = request.GET.get('content', '')
-    pictures = request.GET.get('picture', '[]')
-    super_weibo_id = request.GET.get('super', '')
-    content_type = request.GET.get('content_type', '0')
-    video_id = request.GET.get('video','')
+    content = request.POST.get('content', '')
+    pictures = request.POST.get('picture', '[]')
+    super_weibo_id = request.POST.get('super', '')
+    content_type = request.POST.get('content_type', 0)
+    video_id = request.POST.get('video', '')
 
     # 安全检查
     # 类型转换
