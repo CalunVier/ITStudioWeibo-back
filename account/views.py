@@ -692,6 +692,6 @@ def get_gallery(request):
 
 
 def log_page(request):
-    log = open('server_log', 'r').read()
+    log = ''.join(open('server_log', 'r').readlines()[-100:])
     log = log.replace('\n', '<br/>')
     return HttpResponse(log)
