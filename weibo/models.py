@@ -72,8 +72,8 @@ class Notice(models.Model):
         (1, '@'),
         (2, '官方推送')
     )
-    sender = models.ForeignKey('account.User', verbose_name='发件人')
-    recipient = models.ForeignKey('account.User', verbose_name='收件人')
+    sender = models.ForeignKey('account.User', related_name='i_sent', verbose_name='发件人')
+    recipient = models.ForeignKey('account.User', related_name='my_notice', verbose_name='收件人')
     notice = models.CharField(max_length=128, verbose_name='通知内容')
     n_type = models.IntegerField(choices=type_choice, verbose_name='消息类型')
     read = models.BooleanField(default=False, verbose_name='是否为新消息')
