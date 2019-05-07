@@ -46,7 +46,7 @@ def register(request):
                 'username': request.POST.get('user_id', '')
             }
             # 检查验证码是否正确
-            if True or not check_email_verify_code_not_right(post_body_json['email'], post_body_json['verify_code']):
+            if not check_email_verify_code_not_right(post_body_json['email'], post_body_json['verify_code'], 'reg'):
                 logger.debug('验证码检查通过')
 
                 # 检查用户ID合法
@@ -403,7 +403,7 @@ def forgot_password(request):
             if not check_email_verify(email):
                 # 错误的email
                 return HttpResponse(status_str % 4)
-            if True or check_email_verify_code_not_right(email, verfy_code):
+            if check_email_verify_code_not_right(email, verfy_code, 'forgot'):
                 # 验证码错误
                 return HttpResponse("{\"status\":2}")
             else:
