@@ -49,7 +49,8 @@ def weibo_list_process_to_dict(request, weibo_db, page):
             logger.debug("检查是否following")
             user = check_logged(request)
             if user:
-                check_follow = user.userweiboinfo.following.filter(username=item_data['author_id'])
+                logger.debug("用户已登录")
+                check_follow = user.user_info.following.filter(username=item_data['author_id'])
                 if check_follow:
                     item_data['following'] = True
                 else:
