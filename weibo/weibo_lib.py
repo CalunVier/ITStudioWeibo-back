@@ -46,10 +46,9 @@ def weibo_list_process_to_dict(request, weibo_db, page):
                 item_data['is_like'] = True
 
             # 检查是否following
-
-            username = request.COOKIES.get('username', '')
-            if username:
-                user = User.objects.get(username=username)
+            logger.debug("检查是否following")
+            user = check_logged(request)
+            if user:
                 check_follow = user.userweiboinfo.following.filter(username=item_data['author_id'])
                 if check_follow:
                     item_data['following'] = True
@@ -62,13 +61,14 @@ def weibo_list_process_to_dict(request, weibo_db, page):
 
         # 处理视频和图片
         if item.content_type == 1:  # img
+            logger.debug("处理图片")
             imgs_db = item.images.image.all()
             imgs_list = []
             for img in imgs_db:
                 imgs_list.append(img.image.url)
             item_data['imgs'] = imgs_list
         elif item.content_type == 2:  # video
-            item = WeiboItem.objects.get()
+            logger.debug("处理视频")
             videos_db = item.video.video
             item_data['video'] = videos_db.video.url
 
