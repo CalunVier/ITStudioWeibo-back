@@ -500,7 +500,7 @@ def upload_video(request):
     try:
         if request.method == 'POST':
             try:
-                video = request.FILES['image']
+                video = request.FILES['video']
             except:
                 logger.debug("没有发现上传的视频")
                 return HttpResponse("{\"status\":7}", status=204)

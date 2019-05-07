@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import WeiboItem, WeiboInfo, WeiboComment, Notice
+from .models import WeiboItem, WeiboInfo, WeiboComment, Notice, Video
 
 
 class WeiboItemAdmin(admin.ModelAdmin):
@@ -31,3 +31,4 @@ class WeiboInfoAdmin(admin.ModelAdmin):
 admin.site.register(WeiboInfo, WeiboInfoAdmin)
 admin.site.register(WeiboComment)
 admin.site.register(Notice)
+admin.site.register(Video)
