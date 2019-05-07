@@ -1,16 +1,17 @@
+import datetime
+import json
+import logging
+import re
+
 from django.http import HttpResponse
-from .models import UserWeiboInfo, User
-from weibo.models import WeiboItem, Images
-from .account_lib import check_user_id_verify, check_password_verify, set_login_cookie, check_email_verify, to_register, check_logged, delete_login_cookie
-from weibo.weibo_lib import weibo_list_process_to_dict
+
 from ITstudioWeibo.calunvier_lib import page_of_queryset
 from ITstudioWeibo.general import check_email_verify_code_not_right
-import logging
-import json
-import random
-import datetime
-import re
-import string
+from weibo.models import WeiboItem, Images
+from weibo.weibo_lib import weibo_list_process_to_dict
+from .account_lib import check_user_id_verify, check_password_verify, set_login_cookie, check_email_verify, to_register, \
+    check_logged, delete_login_cookie
+from .models import UserWeiboInfo, User
 
 logger = logging.getLogger('my_logger.account.view')
 status_str = '{"status": %d}'
@@ -37,52 +38,40 @@ def register(request):
         if request.method == 'POST':
             logger.debug('收到post请求')
 
-            # 随机生成用户名
-            # while True:
-            #     username = ''.join(random.sample(string.ascii_lowercase, 8))
-            #     u_db = User.objects.filter(username=username)
-            #     if not u_db:
-            #         break
-
-            username = request.POST.get('user_id', '')
-            if not check_user_id_verify(username):
-                return HttpResponse(status_str % 7, status=403)
-
             # 为了兼容旧代码 构建post_body_json
             post_body_json = {
                 'email': request.POST.get('email', ''),
                 'password': request.POST.get('password', ''),
                 'verify_code': request.POST.get('verify_code', ''),
-                'username': ''.join(random.sample(string.ascii_lowercase, 8))
+                'username': request.POST.get('user_id', '')
             }
-
-            # post判断post_body是否存在所需内容
-            if not check_email_verify(post_body_json['email']):
-                logger.info('邮箱格式不合法')
-                return HttpResponse("{\"status\":10}", status=400)
-
             # 检查验证码是否正确
             if True or not check_email_verify_code_not_right(post_body_json['email'], post_body_json['verify_code']):
-                # logger.debug('验证码检查通过')
-                if not post_body_json['password']:
-                    logger.info('空密码')
-                    return HttpResponse("{\"status\":5}", status=400)
+                logger.debug('验证码检查通过')
+
+                # 检查用户ID合法
+                if not check_user_id_verify(post_body_json['username']):
+                    return HttpResponse(status_str % 7, status=412)
+
+                # post判断post_body是否存在所需内容
+                if not check_email_verify(post_body_json['email']):
+                    logger.info('邮箱格式不合法')
+                    return HttpResponse("{\"status\":10}", status=412)
 
                 if not check_password_verify(post_body_json['password']):
                     logger.info('密码不合法')
-                    return HttpResponse("{\"status\":5}", status=403)
-
+                    return HttpResponse("{\"status\":5}", status=412)
                 # 写入数据库
                 logger.info('将注册信息写入数据库')
                 result, user = to_register(post_body_json['username'], post_body_json['password'], post_body_json['email'])
                 # 返回结果
-                if not result:
+                if not result:      # 注册成功返回0，故not
                     # 注册成功
-                    logger.info('返回注册成功')
+                    logger.debug('返回注册成功')
                     return HttpResponse("{\"status\":0}", status=200)
                 else:
                     # 注册失败返回状态码
-                    logger.error('注册失败返回状态码')
+                    logger.error('注册失败,状态码：%d', result)
                     return HttpResponse("{\"status\":" + str(result) + "}", status=406)
 
             else:
@@ -116,6 +105,7 @@ def login(request):
 
             # 判断是否登陆
             if not check_logged(request):
+
                 # 为兼容旧代码，构建post_body_json
                 post_body_json = {
                     'user_key': request.POST.get('email', ''),
@@ -127,7 +117,7 @@ def login(request):
                     # 无效的用户ID
                     logger.info('无效的用户索引')
                     return HttpResponse("{\"result\":1}", status=400)
-                if not post_body_json['password']:
+                if not check_password_verify(post_body_json['password']):
                     # 无效的密码
                     logger.info('无效的密码')
                     return HttpResponse("{\"status\":2}", status=400)
@@ -135,7 +125,7 @@ def login(request):
                 # 查询用户，获取用户数据库对象
                 user = User.objects.filter(email=post_body_json['user_key'])
 
-                if user and user[0].is_active:
+                if user:
                     # 检索到用户
                     logger.info('检索到用户'+post_body_json['user_key'])
                     user = user[0]
@@ -192,44 +182,53 @@ def change_user_info(request):
     """
     try:
         if request.method == "POST":
-            new_sex = request.POST.get('user_sex', -1)
-            new_birth = request.POST.get('user_birth', '')
-            new_school = request.POST.get('school', '')
-
+            logger.debug("收到POST请求")
+            new_sex = request.POST.get('user_sex', -1)      # 如果未给出该参数，则-1，标记为未给定
+            new_birth = request.POST.get('user_birth', '')  # 如果未给出，置为空
+            new_school = request.POST.get('school', '')     # 如果未给出，置为空
+            # 登陆状态检查
             user = check_logged(request)
             if not user:
                 # 未登录
                 return HttpResponse("{\"status\":4}", status=401)
 
             # 数据预处理
-            re_birth = re.match(r'(\d+)-(\d+)-(\d+)', new_birth)
+            re_birth = re.match(r'^(\d+)-(\d+)-(\d+)$', new_birth)    # 正则匹配
             if re_birth:
                 try:
                     new_birth = datetime.datetime(year=int(re_birth.group(1)), month=int(re_birth.group(2)), day=int(re_birth.group(3)))
                 except:
+                    logger.debug('无效的日期')
                     new_birth = None
             else:
+                logger.debug('未匹配到新生日信息')
                 new_birth = None
             try:
                 new_sex = int(new_sex)
             except:
+                logger.debug('无效的新性别')
                 new_sex = -1
 
             if new_sex in (0, 1, 2, 3):
                 user.sex = new_sex
+                logger.debug("新性别已添加")
             if new_birth and new_birth < datetime.datetime.now():
                 user.birth = new_birth
+                logger.debug("新出生日期已添加")
             if new_school:
                 if new_school == 'none':
                     user.school = ''
+                    logger.debug('学校已置为空')
                 else:
                     user.school = new_school
+                    logger.debug("新学校已添加")
             user.save()
+            logger.debug('信息保存成功')
             return HttpResponse("{\"status\":0}")
-
         else:
             return HttpResponse(status=404)
     except:
+        logger.error('未知错误')
         return HttpResponse("{\"status\":6}", status=503)
 
 
@@ -247,29 +246,34 @@ def change_password(request):
     """
     try:
         if request.method == 'POST':
-            old_password = request.POST.get('old_password')
-            new_password = request.POST.get('new_password')
-            username = request.POST.get('user_id')
+            old_password = request.POST.get('old_password', '')
+            new_password = request.POST.get('new_password', '')
+            username = request.POST.get('user_id', '')
+            if not check_password_verify(new_password):
+                # 新密码不符合规范
+                return HttpResponse("{\"status\":2}", status=406)
+            if not check_password_verify(old_password):
+                # 旧密码不符合规范
+                return HttpResponse("{\"status\":3}", status=406)
+            # 数据库检索用户
             try:
                 user = User.objects.get(username=username)
             except:
+                logger.debug('未检索到用户:%s', username)
                 return HttpResponse("{\"status\":1}", status=404)
-            if check_password_verify(new_password):
-                if user.check_password(old_password):
-                    user.password = new_password
-                    user.save()
-                    return HttpResponse("{\"status\":0}")
-                else:
-                    # 旧密码错误
-                    return HttpResponse("{\"status\":3}", status=403)
+            # 检查旧密码是否正确
+            if user.check_password(old_password):
+                user.password = new_password
+                user.save()
+                logger.debug('密码已修改')
+                return HttpResponse("{\"status\":0}")
             else:
-                # 新密码不符合规范
-                return HttpResponse("{\"status\":2}", status=406)
-
-
+                # 旧密码错误
+                return HttpResponse("{\"status\":3}", status=403)
         else:
             return HttpResponse(status=404)
     except:
+        logger.error('未知错误')
         return HttpResponse("{\"status\":6}", status=500)
 
 
@@ -285,28 +289,24 @@ def change_head(request):
     :return:
     """
     try:
-        head_id = request.POST.get('head', '')
-        try:
-            head_id = int(head_id)
-        except:
-            head_id = None
-
         user = check_logged(request)
         if not user:
+            logger.debug('未登录')
             return HttpResponse("{\"status\":4}", status=401)
-
-        if head_id is not None:
-            try:
-                head_img = Images.objects.get(image_id=head_id)
-            except:
-                return HttpResponse("{\"status\":3}", status=406)
-            user.head = head_img.image
-            user.save()
-            return HttpResponse("{\"status\":0}")
-        else:
+        # 检索图片
+        try:
+            head_img = Images.objects.get(image_id=int(request.POST.get('head', '')))
+        except:
+            logger.debug('未检索到图片，image_id: %s' % request.POST.get('head', ''))
             return HttpResponse("{\"status\":3}", status=406)
+        user.head = head_img.image
+        user.save()
+        return HttpResponse("{\"status\":0}")
     except:
+        logger.debug('未知错误')
         return HttpResponse("{\"status\":6}", status=500)
+# todo 将添加图片到相册的任务调整到上传图片处
+# todo 微博添加from信息
 
 
 def change_username(request):
@@ -321,22 +321,25 @@ def change_username(request):
     :return:
     """
     try:
+
         username = request.POST.get('name', '')
+        if not check_user_id_verify(username):
+            logger.debug('新用户id不合法：username=%s' % username)
+            return HttpResponse("{\"status\":3}", status=403)
 
         user = check_logged(request)
         if not user:
+            logger.debug('未登录')
             return HttpResponse("{\"status\":4}", status=401)
 
-        if check_user_id_verify(username):
-            if not User.objects.filter(username=username):
-                user.username = username
-                user.save()
-                return HttpResponse("{\"status\":0}")
-            else:
-                logger.info('用户名重复')
-                return HttpResponse(status_str % 5, status=403)
+        if not User.objects.filter(username=username):
+            user.username = username
+            user.save()
+            return HttpResponse("{\"status\":0}")
         else:
-            return HttpResponse("{\"status\":3}", status=403)
+            logger.info('用户名重复')
+            return HttpResponse(status_str % 5, status=403)
+
     except:
         return HttpResponse("{\"status\":6}", status=500)
 
@@ -387,6 +390,7 @@ def forgot_password(request):
         1：未检索到用户
         2：验证码错误
         3:新密码无效
+        4：错误的email
         6：未知错误
     :param request:
     :return:
@@ -397,8 +401,8 @@ def forgot_password(request):
             verfy_code = request.POST.get('verify_code', '')
             new_password = request.POST.get('new_password','')
             if not check_email_verify(email):
-                # 错误的email todo
-                return HttpResponse()
+                # 错误的email
+                return HttpResponse(status_str % 4)
             if True or check_email_verify_code_not_right(email, verfy_code):
                 # 验证码错误
                 return HttpResponse("{\"status\":2}")

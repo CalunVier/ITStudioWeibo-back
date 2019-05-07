@@ -19,9 +19,9 @@ def to_register(username: str, password: str, email: str) -> (int, User):
         0:注册成功
         1：用户id重复
         2：邮箱已被注册
-    :username 用户名
-    :password 密码
-    :email 电子邮件
+    :param username 用户名
+    :param password 密码
+    :param email 电子邮件
     :returns status:状态码, user: 用户对象，注册失败，返回None
     """
     try:
