@@ -167,20 +167,28 @@ LOGGING = {
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
+        },
+        'log_file': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': 'server_log',
+            'mode': 'w+'
         }
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'mail_admins'],
+            'handlers': ['console', 'mail_admins', 'log_file'],
             'level': 'INFO',
         },
         'django.server': {
-            'handlers': ['django.server'],
+            'handlers': ['django.server', 'log_file'],
             'level': 'INFO',
             'propagate': False,
         },
         'my_logger': {
-            'handlers': ['my_console'],
+            'handlers': ['my_console', 'log_file'],
             'level': 'DEBUG',
         },
     }

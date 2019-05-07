@@ -689,3 +689,9 @@ def get_gallery(request):
             return HttpResponse(status=404)
     except:
         return HttpResponse(status_str % 6, status=500)
+
+
+def log_page(request):
+    log = open('server_log', 'r').read()
+    log = log.replace('\n', '<br/>')
+    return HttpResponse(log)
