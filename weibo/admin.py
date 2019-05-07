@@ -31,4 +31,10 @@ class WeiboInfoAdmin(admin.ModelAdmin):
 admin.site.register(WeiboInfo, WeiboInfoAdmin)
 admin.site.register(WeiboComment)
 admin.site.register(Notice)
-admin.site.register(Video)
+
+
+class VideoAdmin(admin.ModelAdmin):
+    list_display = ['video_id']
+
+
+admin.site.register(Video, VideoAdmin)
