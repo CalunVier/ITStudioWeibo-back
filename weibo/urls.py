@@ -16,4 +16,7 @@ urlpatterns = [
     url(r'^like_list', liker_list),
     url(r'^change_notice_read', change_notice_read),
     url(r'^notice_list', get_notice_list),
+    url(r'^search_all', search_all),
+    url(r'^search_weibo', search_weibo),
+    url(r'^search_user', search_user)
 ]

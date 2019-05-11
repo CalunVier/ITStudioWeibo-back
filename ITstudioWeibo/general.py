@@ -11,7 +11,7 @@ logger = logging.getLogger('my_logger.general')
 
 
 def check_email_verify_code_not_right(verify_id, verify_code, use):
-    vc = cache.get(verify_id, {})
+    vc = cache.get('email_verify_'+verify_id, {})
     if vc:
         if verify_code == vc.get('code', '') and use == vc.get('use', ''):
             return 0
@@ -35,7 +35,8 @@ def to_send_email_verify_code(to_email, use):
         fail_silently=False,
     )
     logger.debug('邮件发送成功')
-    cache.set(to_email, {'sent_time': time.time(), 'code': code, 'use': use}, 3600)
+    logger.debug('写入缓存')
+    cache.set('email_verify_'+to_email, {'sent_time': time.time(), 'code': code, 'use': use}, 3600)
 
 
 def i_get_email_verify_code(request):

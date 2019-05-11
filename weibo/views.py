@@ -1,10 +1,12 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.core.cache import cache
 from account.account_lib import check_logged
 from account.models import User
 from ITstudioWeibo.calunvier_lib import page_of_queryset
 from .models import WeiboItem, Images, WeiboToImage, Video, WeiboToVideo, WeiboComment, Notice
 from .weibo_lib import weibo_list_process_to_dict, to_create_weibo, create_weibo_comment, process_notice_to_list
+from .weibo_lib import search_weibo_lib, search_user_lib, process_user_to_list
 from django.db.models.query import QuerySet
 import json
 import pathlib
@@ -314,6 +316,132 @@ def get_notice_list(request):
                 ns_db = Notice.objects.all()
                 response_list = process_notice_to_list(ns_db)
                 return HttpResponse(json.dumps({'list': response_list, 'status': 0}))
+        else:
+            return HttpResponse(status=404)
+    except:
+        return HttpResponse(status_str % 6, status=500)
+
+
+# 搜索
+def search_all(request):
+    try:
+        if request.method == 'GET':
+            key_word = request.GET.get('key')
+            if not key_word:
+                logger.debug('空关键字')
+                return HttpResponse(status_str % 2, status=403)
+            # 获取分页信息
+            try:
+                user_num = int(request.GET.get('user_num'), 6)
+            except:
+                user_num = 6
+            try:
+                weibo_num = int(request.GET.get('weibo_num'), 10)
+            except:
+                weibo_num = 10
+            try:
+                weibo_page = int(request.GET.get('weibo_page'), 1)
+            except:
+                weibo_page = 1
+            try:
+                user_page = int(request.GET.get('user_page'), 1)
+            except:
+                user_page = 1
+            logger.debug('搜索微博')
+            weibo_db, weibo_total = search_weibo_lib(key_word)
+            logger.debug('搜索用户')
+            user_db, user_total = search_user_lib(key_word)
+            logger.debug('分页')
+            weibo_db = page_of_queryset(weibo_db, weibo_page, weibo_num)
+            user_db = page_of_queryset(user_db, user_page, user_num)
+            logger.debug('处理返回字典')
+            weibo_dict = weibo_list_process_to_dict(request, weibo_db, weibo_page)
+            weibo_dict['total'] = weibo_total
+            del weibo_dict['status']
+            user_dict = {
+                'page': user_page,
+                'list': process_user_to_list(user_db),
+                'total': user_total
+            }
+            # 返回结果
+            return HttpResponse(json.dumps({
+                'user': user_dict,
+                'weibo': weibo_dict,
+                'status': 0
+            }))
+        else:
+            return HttpResponse(status=404)
+    except:
+        logger.error('未知错误')
+        return HttpResponse(status_str % 6, status=500)
+
+
+# 搜索微博内容
+def search_weibo(request):
+    """
+    GET Quuery
+        page:页
+        num:每页数量
+        key:搜索关键词
+
+    返回
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == 'GET':
+            try:
+                page = int(request.GET.get('page', 1))
+            except:
+                page = 1
+            try:
+                num = int(request.GET.get('num', 10))
+            except:
+                num = 10
+            key_word = request.GET.get('key', '')
+            if not key_word:
+                logger.debug('空的key_word')
+                return HttpResponse(status_str % 2, status=403)
+            weibo_db, total = search_weibo_lib(key_word)
+            logger.debug('搜索完成')
+            weibo_db = page_of_queryset(weibo_db, page, num)
+            response_dict = weibo_list_process_to_dict(request, weibo_db, page)
+            response_dict['total'] = total
+            return HttpResponse(json.dumps(response_dict), status=200)
+        else:
+            return HttpResponse(status=404)
+    except:
+        logger.error('未知错误')
+        return HttpResponse(status_str % 6, status=500)
+
+
+# 搜索用户
+def search_user(request):
+    """
+    返回及状态说明：
+        status
+            0:成功
+            2:空的关键字
+    :param request:
+    :return:
+    """
+    try:
+        if request.method == 'GET':
+            try:
+                page = int(request.GET.get('page', 1))
+            except:
+                page = 1
+            try:
+                num = int(request.GET.get('num'), 10)
+            except:
+                num = 10
+            key_word = request.GET.get('key')
+            if not key_word:
+                return HttpResponse(status_str % 2, status=403)
+            user_db, total = search_user_lib(key_word)
+            user_db = page_of_queryset(user_db, page, num)
+            response_list = process_user_to_list(user_db)
+            return HttpResponse(json.dumps({'page': page, 'list': response_list, 'total':total, 'status': 0}))
         else:
             return HttpResponse(status=404)
     except:

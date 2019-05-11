@@ -2,6 +2,7 @@ from account.account_lib import check_logged
 from account.models import User
 from .models import WeiboToVideo, Notice, WeiboItem, Images, WeiboToImage, Video, WeiboComment
 from django.http import HttpResponse
+from django.core.cache import cache
 import json
 import logging
 import re
@@ -202,4 +203,50 @@ def process_notice_to_list(notice_db):
                 'time': n.time.timestamp(),
                 'sender_id': n.sender.username
             })
+    return response_list
+
+
+def search_weibo_lib(key_word: str):
+    """
+
+    :param key_word:
+    :return: weibo_db
+    """
+    old = cache.get('search_weibo_' + key_word)
+    if old:
+        return old, old.count()
+    if not key_word:
+        logger.debug('空关键词')
+        return WeiboItem.objects.all()
+    weibo_db = WeiboItem.objects.filter(content__contains=key_word).order_by('-create_time')
+    cache.set('search_weibo_' + key_word, weibo_db, 10)
+    return weibo_db, weibo_db.count()
+
+
+def search_user_lib(key_word: str):
+    """
+
+    :param key_word:
+    :return:
+    """
+    old = cache.get('search_user_' + key_word)
+    if old:
+        return old, old.count()
+    if not key_word:
+        user_all = User.objects.all()
+        return user_all, user_all.count()
+    user_db = User.objects.filter(username='')
+    logger.debug('写入缓存')
+    cache.set('search_user_' + key_word, user_db, 30)
+    return user_db, user_db.count()
+
+
+def process_user_to_list(user_db):
+    response_list = []
+    for user in user_db:
+        response_list.append({
+            'user_id': user.username,
+            'user_head': user.head.url,
+            'user_info': user.intro
+        })
     return response_list
