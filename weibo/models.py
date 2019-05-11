@@ -18,7 +18,7 @@ class Video(models.Model):
 
 # 微博信息表
 class WeiboInfo(models.Model):
-    weibo = models.OneToOneField('weibo.WeiboItem',related_name='weiboinfo', verbose_name=u'微博')
+    weibo = models.OneToOneField('weibo.WeiboItem', related_name='weiboinfo', verbose_name=u'微博')
     forward_num = models.IntegerField(default=0, verbose_name=u'转发量')
     comment_num = models.IntegerField(default=0, verbose_name=u'评论量')
     like_num = models.IntegerField(default=0, verbose_name=u'点赞数量')
