@@ -65,8 +65,9 @@ def get_item_list(request):
                     return HttpResponse(json.dumps({'status': 4}), status=401)
             elif tag == 'video':
                 weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').filter(content_type=2).exclude(is_active=False)
+                weibo_db.order_by('-create_time')
             else:
-                weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').exclude(is_active=False).order_by('-weiboinfo__like_num')
+                weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').filter(create_time__gte=datetime.datetime.now()-datetime.timedelta(7)).exclude(is_active=False).order_by('-weiboinfo__like_num')
 
             # 分页
             weibo_db = page_of_queryset(weibo_db, page=page, num=num)
@@ -80,7 +81,7 @@ def get_item_list(request):
             # 非GET不接
             return HttpResponse(status=404)
     except:
-        return HttpResponse("{\"status\":6}")
+        return HttpResponse("{\"status\":6}", status=500)
 
 
 # 获取微博详细信息
@@ -95,10 +96,9 @@ def get_weibo_info(request):
     """
     try:
         if request.method == "GET":
-            weibo_id = request.GET.get('weibo_id', '')
             try:
-                weibo_id = int(weibo_id)
-                item = WeiboItem.objects.get(id = weibo_id)
+                weibo_id = int(request.GET.get('weibo_id', ''))
+                item = WeiboItem.objects.select_related('author', 'weiboinfo').get(id=weibo_id)
                 assert item.is_active
             except:
                 return HttpResponse("{\"status\":3}", status=404)
