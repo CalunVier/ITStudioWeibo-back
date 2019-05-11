@@ -482,10 +482,13 @@ def delete_weibo(request):
     :return:
     """
     if request.method == "DELETE":
-        weibo_id = request.POST.get("weibo_id")
+        query = re.findall(r'((\w+)=(\w+))', request.body)
+        for t in query:
+            if t[1] == 'weibo_id':
+                weibo_id = t[2]
         try:
             weibo_id = int(weibo_id)
-            weibo = WeiboItem.objects.get(id = weibo_id)
+            weibo = WeiboItem.objects.get(id=weibo_id)
         except:
             # 未检查到ID
             return HttpResponse("{\"status\":1}")
@@ -524,8 +527,12 @@ def delete_comment(request):
             if not user:
                 logger.debug("未登录")
                 return HttpResponse("{\"status\":4}", status=401)
+            query = re.findall(r'((\w+)=(\w+))', request.body.decode('utf-8'))
+            for t in query:
+                if t[1] == 'comment_id':
+                    comment_id = t[2]
             try:
-                comment = WeiboComment.objects.get(id=int(request.POST.get('comment_id', '')))
+                comment = WeiboComment.objects.get(id=int(comment_id))
             except:
                 logger.debug("找不到评论")
                 return HttpResponse("{\"status\":2}")

@@ -226,7 +226,7 @@ def search_weibo_lib(key_word: str):
         logger.debug('空关键词')
         return WeiboItem.objects.all()
 
-    weibo_db = WeiboItem.objects.filter(content__contains=key_word).exclude(is_active=False).order_by('-create_time')        # todo 研究排序
+    weibo_db = WeiboItem.objects.filter(content__contains=key_word).exclude(is_active=False).order_by('-create_time')
     cache.set('search_weibo_' + key_word, weibo_db, 10)
     return weibo_db, weibo_db.count()
 

@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.db.models.query import QuerySet
 import logging
 
 
@@ -77,6 +78,14 @@ class WeiboItem(models.Model):
     def delete(self, using=None, keep_parents=False):
         self.author.user_info.weibo_num -= 1
         self.author.user_info.save()
+        if self.super_weibo:
+            end_super_weibo = self.super_weibo
+            while end_super_weibo.super_weibo:
+                end_super_weibo.weiboinfo.forward_num -= 1
+                end_super_weibo.weiboinfo.save()
+                end_super_weibo = end_super_weibo.super_weibo
+            end_super_weibo.weiboinfo.forward_num -= 1
+            end_super_weibo.weiboinfo.save()
         super(WeiboItem, self).delete(using=None, keep_parents=False)
 
     def __str__(self):
