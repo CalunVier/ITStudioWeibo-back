@@ -59,15 +59,15 @@ def get_item_list(request):
                     weibo_db = WeiboItem.objects.none()
                     if followings:
                         for author in followings:
-                            weibo_db = weibo_db | WeiboItem.objects.select_related('super', 'weiboinfo').filter(author=author).exclude(is_active=False)
+                            weibo_db = weibo_db | WeiboItem.objects.select_related('super_weibo', 'weiboinfo').filter(author=author).exclude(is_active=False)
                     weibo_db.order_by('-create_time')
                 else:
                     return HttpResponse(json.dumps({'status': 4}), status=401)
             elif tag == 'video':
-                weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').filter(content_type=2).exclude(is_active=False)
+                weibo_db = WeiboItem.objects.select_related('super_weibo', 'weiboinfo').filter(content_type=2).exclude(is_active=False)
                 weibo_db.order_by('-create_time')
             else:
-                weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').filter(create_time__gte=datetime.datetime.now()-datetime.timedelta(7)).exclude(is_active=False).order_by('-weiboinfo__like_num')
+                weibo_db = WeiboItem.objects.select_related('super_weibo', 'weiboinfo').filter(create_time__gte=datetime.datetime.now() - datetime.timedelta(7)).exclude(is_active=False).order_by('-weiboinfo__like_num', '-create_time')
 
             # 分页
             weibo_db = page_of_queryset(weibo_db, page=page, num=num)
@@ -116,12 +116,15 @@ def get_weibo_info(request):
             }
 
             # 处理转发情况
-            if item.super:
+            if item.super_weibo:
+                end_super_weibo = item.super_weibo
+                while end_super_weibo.super_weibo:
+                    end_super_weibo = end_super_weibo.super_weibo
                 item_data['is_forward'] = True
                 item_data["super_weibo"] = {
-                    'weibo_id': item.super.id,
-                    'content': item.super.content,
-                    'author_id': item.super.author.id,
+                    'weibo_id': end_super_weibo.id,
+                    'content': end_super_weibo.content,
+                    'author_id': end_super_weibo.author.id,
                 }
             else:
                 item_data['is_forward'] = False
@@ -219,8 +222,22 @@ def comment_like_list(request):
                 return HttpResponse(json.dumps({"page": page, "list": response_list, "status": 0}))
             elif tag == 'forward':
                 # 检索数据库，为方便复制代码，变量名为comment
-                comments = WeiboItem.objects.select_related('author').filter(super=weibo).exclude(is_active=False)
+                comments = WeiboItem.objects.select_related('author').filter(super_weibo=weibo).exclude(is_active=False)
+                sub_weibo = comments
+                sub2_weibo = WeiboItem.objects.none()
+                loop_still = 1
+                while loop_still:
+                    for sw in sub_weibo:
+                        ssw = WeiboItem.objects.select_related('author').filter(super_weibo=sw).exclude(is_active=False)
+                        if ssw:
+                            loop_still = 1
+                            sub2_weibo = sub2_weibo | ssw
+                    comments = comments | sub2_weibo
+                    sub_weibo = WeiboItem.objects.none() | sub2_weibo
+                    sub2_weibo = WeiboItem.objects.none()
+                    loop_still = 0
                 # 分页
+                comments = comments.order_by('-create_time')
                 comments = page_of_queryset(comments, page, num)
                 response_list = []
                 for comment in comments:
@@ -228,7 +245,8 @@ def comment_like_list(request):
                         "user_id": comment.author.username,
                         "user_head": comment.author.head.url,
                         "time": comment.create_time.timestamp(),
-                        "comment_id": comment.id
+                        "weibo_id": comment.id,
+                        'content': comment.content
                     }
                     response_list.append(comment_dict)
                 return HttpResponse(json.dumps({"page": page, "list": response_list, "status": 0}))

@@ -31,12 +31,15 @@ def weibo_list_process_to_dict(request, weibo_db, page):
         }
 
         # 处理转发情况
-        if item.super:
+        if item.super_weibo:
+            end_super_weibo = item.super_weibo
+            while end_super_weibo.super_weibo:
+                end_super_weibo = end_super_weibo.super_weibo
             item_data['is_forward'] = True
             item_data["super_weibo"] = {
-                'weibo_id': item.super.id,
-                'content': item.super.content,
-                'author_id': item.super.author.id,
+                'weibo_id': end_super_weibo.id,
+                'content': end_super_weibo.content,
+                'author_id': end_super_weibo.author.id,
             }
 
         user = check_logged(request)
@@ -103,18 +106,11 @@ def to_create_weibo(content, user, content_type, imgs_id, video_id, super_weibo_
             try:
                 logger.debug('处理转发')
                 super_weibo = WeiboItem.objects.get(id=super_weibo_id)
-                if super_weibo.super:
-                    weibo.super = super_weibo.super
-                else:
-                    weibo.super = super_weibo
+                weibo.super_weibo = super_weibo
             except:
                 logger.debug('无效的super微博')
                 return HttpResponse("{\"status\":5}", status=500)
         weibo.save()
-
-        user.user_info.weibo_num += 1
-        user.user_info.save()
-        logger.debug('更新user_info.weibo_num')
 
         at_notice_catcher(user, content, weibo.id)
 
@@ -174,8 +170,6 @@ def create_weibo_comment(user, weibo, content):
     comment = WeiboComment(author=user, weibo=weibo, content=content)
     comment.save()
     at_notice_catcher(user, content, weibo.id)
-    weibo.weiboinfo.comment_num += 1
-    weibo.weiboinfo.save()
     return comment
 
 

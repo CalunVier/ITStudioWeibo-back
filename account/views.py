@@ -560,7 +560,7 @@ def my_weibo_list(request):
             elif tag == 'collect':
                 weibo_db = user.user_info.collect_weibo.all().exclude(is_active=False)
             elif tag == 'original':
-                weibo_db = WeiboItem.objects.filter(author=user, super=None).exclude(is_active=False)
+                weibo_db = WeiboItem.objects.filter(author=user, super_weibo=None).exclude(is_active=False)
             elif tag == 'my_weibo':
                 weibo_db = WeiboItem.objects.filter(author=user).exclude(is_active=False)
             else:
