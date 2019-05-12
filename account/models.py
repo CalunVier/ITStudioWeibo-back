@@ -36,7 +36,7 @@ class User(AbstractUser):
     sex = models.IntegerField(default=0, choices=sex_choices, verbose_name=u'性别')
     birth = models.DateTimeField(null=True, blank=True, verbose_name=u'生日')
     school = models.CharField(max_length=128, null=True, blank=True, verbose_name=u'学校')
-    intro = models.CharField(max_length=180, null=True, blank=True, verbose_name=u'介绍')
+    intro = models.CharField(max_length=180, default='', null=True, blank=True, verbose_name=u'介绍')
 
     class Meta:
         indexes = [

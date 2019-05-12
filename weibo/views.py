@@ -218,7 +218,8 @@ def comment_like_list(request):
                         "user_id": comment.author.username,
                         "user_head": comment.author.head.url,
                         "time": comment.ctime.timestamp(),
-                        "comment_id": comment.id
+                        "comment_id": comment.id,
+                        'content': comment.content
                     }
                     response_list.append(comment_dict)
                 return HttpResponse(json.dumps({"page": page, "list": response_list, "status": 0}))
@@ -274,10 +275,11 @@ def liker_list(request):
     """
     try:
         if request.method == 'GET':
+            logger.debug('收到GET请求')
             try:
-                weibo = WeiboItem.objects.select_related('weiboinfo').get(int(request.GET.get('weibo_id', '')))
+                weibo = WeiboItem.objects.select_related('weiboinfo').get(id=int(request.GET.get('weibo_id', '')))
             except:
-                logger.debug("找不到指定微博")
+                logger.debug("找不到指定微博：%s " % request.GET.get('weibo_id', ''))
                 return HttpResponse(status_str % 2, status=404)
 
             # 获取分页信息
@@ -299,7 +301,7 @@ def liker_list(request):
                    "user_id": liker.username,
                    "user_info": liker.intro
                 })
-            return HttpResponse(json.dumps({"page": page, 'list':response_list, 'status': 0}))
+            return HttpResponse(json.dumps({"page": page, 'list': response_list, 'status': 0}))
         else:
             return HttpResponse(status=404)
     except:
@@ -404,7 +406,8 @@ def search_weibo(request):
         num:每页数量
         key:搜索关键词
 
-    返回
+    返回及状态说明
+
     :param request:
     :return:
     """
@@ -484,7 +487,7 @@ def delete_weibo(request):
     :return:
     """
     if request.method == "DELETE":
-        query = re.findall(r'((\w+)=(\w+))', request.body)
+        query = re.findall(r'((\w+)=(\w+))', request.body.decode('utf-8'))
         for t in query:
             if t[1] == 'weibo_id':
                 weibo_id = t[2]
@@ -538,8 +541,11 @@ def delete_comment(request):
             except:
                 logger.debug("找不到评论")
                 return HttpResponse("{\"status\":2}")
+            for t in query:
+                if t[1] == 'weibo_id':
+                    weibo_id = t[2]
             try:
-                weibo = WeiboItem.objects.get(id = int(request.POST.get('weibo_id', '')))
+                weibo = WeiboItem.objects.get(id=weibo_id)
             except:
                 logger.debug("找不到指定微博")
                 return HttpResponse("{\"status\":3}", status=406)
@@ -695,7 +701,7 @@ def collect_weibo(request):
             user = check_logged(request)
             if not user:
                 return HttpResponse("{\"status\":4}", status=401)
-            user.user_info.collect_weibo.add(*weibo)
+            user.user_info.collect_weibo.add(weibo)
             return HttpResponse("{\"status\":0}")
         else:
             return HttpResponse(status=404)
@@ -768,7 +774,7 @@ def change_like_status(request):
                 logger.debug("未找到指定微博")
                 return HttpResponse("{\"status\":2}")
 
-            if weibo.weiboinfo.like.filter(user):
+            if weibo.weiboinfo.like.filter(id=user.id):
                 weibo.weiboinfo.like.remove(user)
                 weibo.weiboinfo.like_num -= 1
             else:
@@ -799,6 +805,7 @@ def change_notice_read(request):
             if n.recipient == user:
                 n.read = True
                 n.save()
+                return HttpResponse(status_str % 0)
             else:
                 logger.debug('权限不足')
                 return HttpResponse(status_str % 5, status='403')

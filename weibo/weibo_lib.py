@@ -107,6 +107,7 @@ def to_create_weibo(content, user, content_type, imgs_id, video_id, super_weibo_
                 logger.debug('处理转发')
                 super_weibo = WeiboItem.objects.get(id=super_weibo_id)
                 weibo.super_weibo = super_weibo
+                content_type = 0
             except:
                 logger.debug('无效的super微博')
                 return HttpResponse("{\"status\":5}", status=500)
@@ -191,7 +192,7 @@ def process_notice_to_list(notice_db):
             response_list.append({
                 'type': 1,
                 'notice_id': n.id,
-                'content': n.content,
+                'content': n.notice,
                 'read': n.read,
                 'time': n.time.timestamp(),
                 'weibo_id': json.loads(n.other).get('weibo_id', ''),
@@ -201,7 +202,7 @@ def process_notice_to_list(notice_db):
             response_list.append({
                 'type': 0,
                 'notice_id': n.id,
-                'content': n.content,
+                'content': n.notice,
                 'read': n.read,
                 'time': n.time.timestamp(),
                 'sender_id': n.sender.username,
