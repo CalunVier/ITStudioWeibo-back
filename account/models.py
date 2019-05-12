@@ -8,10 +8,10 @@ class UserWeiboInfo(models.Model):
     :model:'accoun.User'.
     """
     user = models.OneToOneField('account.User', related_name='user_info', primary_key=True, on_delete=models.CASCADE, verbose_name=u'用户')
-    follow_num = models.IntegerField(default=0, verbose_name=u'跟随数量')
+    follow_num = models.IntegerField(default=0, verbose_name=u'关注数')
     following = models.ManyToManyField('User', related_name='followers', verbose_name=u'关注的人')
-    fans_num = models.IntegerField(default=0, verbose_name=u'喜欢的人')
-    weibo_num = models.IntegerField(default=0, verbose_name=u'微博数量')
+    fans_num = models.IntegerField(default=0, verbose_name=u'粉丝数')
+    weibo_num = models.IntegerField(default=0, verbose_name=u'微博数')
     collect_weibo = models.ManyToManyField('weibo.WeiboItem', related_name='collect_weibo', verbose_name=u'收藏微博')
     gallery = models.ManyToManyField('weibo.Images', related_name='owner', verbose_name=u'相册')
 
@@ -23,6 +23,7 @@ class User(AbstractUser):
         1；男
         2：女
         3：其他
+    todo 将email设置为必须的
     """
 
     sex_choices = (

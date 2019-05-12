@@ -1,5 +1,10 @@
 from django.db import models
 from django.conf import settings
+from django.db.models.query import QuerySet
+import logging
+
+
+logger = logging.getLogger('my_logger.weibo.model')
 
 
 # 图片表
@@ -41,17 +46,47 @@ class WeiboItem(models.Model):
     author = models.ForeignKey('account.User', verbose_name='作者')
     create_time = models.DateTimeField(auto_now=True, verbose_name='发表时间')
     content = models.CharField(max_length=150, verbose_name='内容')
-    super = models.ForeignKey('WeiboItem', null=True, blank=True, on_delete=models.CASCADE, verbose_name='转发自微博')
+    super_weibo = models.ForeignKey('WeiboItem', null=True, blank=True, on_delete=models.CASCADE, verbose_name='转发自微博')
     content_type = models.IntegerField(choices=type_choices, default=0, verbose_name='微博类型')
     is_active = models.BooleanField(default=True, verbose_name='激活')
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
         if not self.id:
-            super(WeiboItem, self).save()
-            WeiboInfo(weibo=self).save()
+            # 新微薄
+            # 调用父类save()保存到数据库
+            super(WeiboItem, self).save(force_insert=False, force_update=False, using=None, update_fields=None)
+            # 增加作者的微博量
+            self.author.user_info.weibo_num += 1
+            self.author.user_info.save()
+            logger.debug('更新user_info.weibo_num')
+            # 创建微博info
+            weibo_info = WeiboInfo(weibo=self)
+            weibo_info.save()
+            # 如果有转发，更新转发微博的转发量
+            if self.super_weibo:
+                end_super_weibo = self.super_weibo
+                while end_super_weibo.super_weibo:
+                    end_super_weibo.weiboinfo.forward_num += 1
+                    end_super_weibo.weiboinfo.save()
+                    end_super_weibo = end_super_weibo.super_weibo
+                end_super_weibo.weiboinfo.forward_num += 1
+                end_super_weibo.weiboinfo.save()
         else:
-            super(WeiboItem, self).save()
+            super(WeiboItem, self).save(force_insert=False, force_update=False, using=None, update_fields=None)
+
+    def delete(self, using=None, keep_parents=False):
+        self.author.user_info.weibo_num -= 1
+        self.author.user_info.save()
+        if self.super_weibo:
+            end_super_weibo = self.super_weibo
+            while end_super_weibo.super_weibo:
+                end_super_weibo.weiboinfo.forward_num -= 1
+                end_super_weibo.weiboinfo.save()
+                end_super_weibo = end_super_weibo.super_weibo
+            end_super_weibo.weiboinfo.forward_num -= 1
+            end_super_weibo.weiboinfo.save()
+        super(WeiboItem, self).delete(using=None, keep_parents=False)
 
     def __str__(self):
         return self.content
@@ -64,6 +99,21 @@ class WeiboComment(models.Model):
     content = models.CharField(max_length=128, verbose_name=u'内容')
     ctime = models.DateTimeField(auto_now=True)
 
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if self.id:
+            super(WeiboComment, self).save(force_insert=False, force_update=False, using=None, update_fields=None)
+        else:
+            super(WeiboComment, self).save(force_insert=False, force_update=False, using=None, update_fields=None)
+            # 新评论
+            self.weibo.weiboinfo.comment_num += 1
+            self.weibo.weiboinfo.save()
+
+    def delete(self, using=None, keep_parents=False):
+        self.weibo.weiboinfo.comment_num -= 1
+        self.weibo.weiboinfo.save()
+
+        super(WeiboComment, self).delete(using=None, keep_parents=False)
 
 # 消息表
 class Notice(models.Model):

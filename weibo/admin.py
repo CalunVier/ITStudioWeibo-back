@@ -3,7 +3,7 @@ from .models import WeiboItem, WeiboInfo, WeiboComment, Notice, Video
 
 
 class WeiboItemAdmin(admin.ModelAdmin):
-    list_display = ['id', 'content', 'content_type', 'create_time', 'super', 'like_num', 'comment_num', 'forward_num']
+    list_display = ['id', 'content', 'content_type', 'create_time', 'super_weibo', 'like_num', 'comment_num', 'forward_num']
     list_display_links = ['content']
     list_select_related = ['weiboinfo']
 

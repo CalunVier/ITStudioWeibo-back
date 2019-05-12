@@ -9,6 +9,8 @@ class UserAdmin(admin.ModelAdmin):
     list_select_related = ['user_info']
     list_filter = ['is_active', 'sex']
     search_fields = ['username', '^id', 'email', 'nick']
+    exclude = ['groups', 'user_permissions', 'first_name', 'last_name']
+    readonly_fields = ['date_joined', ]
 
     # list display
     def user_info_funs_num(self, user):
@@ -51,9 +53,17 @@ admin.site.register(User, UserAdmin)
 
 
 class UserWeiboInfoAdmin(admin.ModelAdmin):
-    list_display = ['user']
+    list_display = ['user_id', 'user', 'follow_num', 'fans_num', 'weibo_num']
     ordering = ['user']
+    list_display_links = ['user']
     readonly_fields = ['follow_num', 'fans_num', 'weibo_num']
+
+    # user_id
+    def user_id(self, userweiboinfo):
+        return userweiboinfo.user.id
+    user_id.short_description = u'用户ID'
+    user_id.admin_order_field = 'user__id'
+
 
 
 admin.site.register(UserWeiboInfo, UserWeiboInfoAdmin)
