@@ -76,7 +76,8 @@ def register(request):
 
             else:
                 # 验证码错误，返回状态码
-                logger.info('验证码错误')
+                logger.debug(check_email_verify_code_not_right(post_body_json['email'], post_body_json['verify_code'], 'reg'))
+                logger.debug('验证码错误'+post_body_json['email']+post_body_json['verify_code']+'reg')
                 return HttpResponse("{\"result\":3}", status=403)
         else:
             # 非post请求，404

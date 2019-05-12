@@ -12,6 +12,7 @@ logger = logging.getLogger('my_logger.general')
 
 def check_email_verify_code_not_right(verify_id, verify_code, use):
     vc = cache.get('email_verify_'+verify_id, {})
+    logger.debug(vc)
     if vc:
         if verify_code == vc.get('code', '') and use == vc.get('use', ''):
             return 0

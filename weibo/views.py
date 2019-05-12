@@ -52,6 +52,7 @@ def get_item_list(request):
 
             # 检索数据库
             if tag == 'follow':
+                # 关注
                 user = check_logged(request)
                 if user:
                     # todo 优化数据库
@@ -60,13 +61,15 @@ def get_item_list(request):
                     if followings:
                         for author in followings:
                             weibo_db = weibo_db | WeiboItem.objects.select_related('super', 'weiboinfo').filter(author=author).exclude(is_active=False)
-                    weibo_db.order_by('-create_time')
+                    weibo_db = weibo_db.order_by('-create_time')
                 else:
+                    logger.debug('未登录')
                     return HttpResponse(json.dumps({'status': 4}), status=401)
             elif tag == 'video':
-                weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').filter(content_type=2).exclude(is_active=False)
-                weibo_db.order_by('-create_time')
+                # video
+                weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').filter(content_type=2).exclude(is_active=False).order_by('-create_time')
             else:
+                # hot
                 weibo_db = WeiboItem.objects.select_related('super', 'weiboinfo').filter(create_time__gte=datetime.datetime.now()-datetime.timedelta(7)).exclude(is_active=False).order_by('-weiboinfo__like_num')
 
             # 分页
@@ -81,6 +84,7 @@ def get_item_list(request):
             # 非GET不接
             return HttpResponse(status=404)
     except:
+        logger.error('未知错误')
         return HttpResponse("{\"status\":6}", status=500)
 
 
@@ -101,6 +105,7 @@ def get_weibo_info(request):
                 item = WeiboItem.objects.select_related('author', 'weiboinfo').get(id=weibo_id)
                 assert item.is_active
             except:
+                logger.debug('未知的微博')
                 return HttpResponse("{\"status\":3}", status=404)
             item_data = {
                 "type": 'text' if item.content_type == 0 else 'image' if item.content_type == 1 else 'video',
