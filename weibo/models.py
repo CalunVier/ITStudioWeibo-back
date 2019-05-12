@@ -97,7 +97,7 @@ class WeiboComment(models.Model):
     author = models.ForeignKey('account.User', on_delete=models.CASCADE)
     weibo = models.ForeignKey(WeiboItem, related_name='comments', on_delete=models.CASCADE)
     content = models.CharField(max_length=128, verbose_name=u'内容')
-    ctime = models.DateTimeField(auto_now=True)
+    ctime = models.DateTimeField(auto_now=True, verbose_name='创建时间')
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
@@ -127,7 +127,7 @@ class Notice(models.Model):
     recipient = models.ForeignKey('account.User', related_name='my_notice', verbose_name='收件人')
     notice = models.CharField(max_length=128, verbose_name='通知内容')
     n_type = models.IntegerField(choices=type_choice, verbose_name='消息类型')
-    read = models.BooleanField(default=False, verbose_name='是否为新消息')
+    read = models.BooleanField(default=False, verbose_name=u'已读')
     time = models.DateTimeField(auto_now=True, verbose_name=u'时间')
     other = models.CharField(max_length=256, verbose_name='备注')
 

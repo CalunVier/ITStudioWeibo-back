@@ -25,12 +25,27 @@ admin.site.register(WeiboItem, WeiboItemAdmin)
 
 
 class WeiboInfoAdmin(admin.ModelAdmin):
+    list_select_related = ['weibo']
+    list_display = ['id', 'weibo', 'forward_num', 'comment_num', 'like_num']
     readonly_fields = ['weibo', 'forward_num', 'comment_num', 'like_num']
 
 
 admin.site.register(WeiboInfo, WeiboInfoAdmin)
-admin.site.register(WeiboComment)
-admin.site.register(Notice)
+
+
+class WeiboCommentAdmin(admin.ModelAdmin):
+    list_select_related = ['weibo', 'author']
+    list_display = ['id', 'weibo', 'content', 'author', 'ctime']
+
+
+admin.site.register(WeiboComment, WeiboCommentAdmin)
+
+
+class NoticeAdmin(admin.ModelAdmin):
+    list_display = ['id', 'notice', 'sender', 'recipient', 'n_type', 'read', 'time', 'other']
+
+
+admin.site.register(Notice, NoticeAdmin)
 
 
 class VideoAdmin(admin.ModelAdmin):
