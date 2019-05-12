@@ -55,7 +55,6 @@ def get_item_list(request):
                 # 关注
                 user = check_logged(request)
                 if user:
-                    # todo 优化数据库
                     followings = user.user_info.following.all()
                     weibo_db = WeiboItem.objects.none()
                     if followings:
@@ -620,6 +619,7 @@ def upload_image(request):
     """
     返回及状态说明
         0：成功
+        4：未登录
         6：未知错误
         7：未发现上传的图片
     :param request:
@@ -627,6 +627,9 @@ def upload_image(request):
     """
     try:
         if request.method == 'POST':
+            user = check_logged(request)
+            if not user:
+                return HttpResponse(status_str % 4, status=401)
             try:
                 image = request.FILES['image']
             except:
@@ -634,6 +637,7 @@ def upload_image(request):
                 return HttpResponse("{\"status\":7}", status=204)
             img_db = Images(image=image)
             img_db.save()
+            user.user_info.gallery.add(img_db)
             return HttpResponse(json.dumps({'img_id': img_db.image_id, 'status': 0}, status=201))
         else:
             return HttpResponse(status=404)

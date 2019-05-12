@@ -306,7 +306,6 @@ def change_head(request):
     except:
         logger.debug('未知错误')
         return HttpResponse("{\"status\":6}", status=500)
-# todo 将添加图片到相册的任务调整到上传图片处
 # todo 微博添加from信息
 
 
@@ -510,8 +509,7 @@ def user_info(request):
                 "user_sex": '男' if user.sex==1 else '女' if user.sex==2 else '其他' if user.sex==3 else '未设定',
                 "user_birth": user.birth.strftime('%Y-%m-%d'),
                 "school": user.school,
-                "photo": []
-                # todo 添加photo的解析
+                "photo": [user.head.url]
             }
             return HttpResponse(json.dumps(response_data))
         else:

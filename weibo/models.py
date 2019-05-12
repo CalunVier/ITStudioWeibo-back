@@ -115,6 +115,7 @@ class WeiboComment(models.Model):
 
         super(WeiboComment, self).delete(using=None, keep_parents=False)
 
+
 # 消息表
 class Notice(models.Model):
     type_choice = (

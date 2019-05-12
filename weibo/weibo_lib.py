@@ -123,7 +123,6 @@ def to_create_weibo(content, user, content_type, imgs_id, video_id, super_weibo_
                     try:
                         image = Images.objects.get(image_id=img_id)
                         imgs_db = imgs_db | image
-                        user.user_info.gallery.add(image)
                     except:
                         pass
 
