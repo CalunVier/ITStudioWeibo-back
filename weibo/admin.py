@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import WeiboItem, WeiboInfo, WeiboComment, Notice, Video
+from .models import WeiboItem, WeiboInfo, WeiboComment, Notice, Video, Images
 
 
 class WeiboItemAdmin(admin.ModelAdmin):
@@ -38,3 +38,9 @@ class VideoAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Video, VideoAdmin)
+
+
+class ImageAdmin(admin.ModelAdmin):
+    list_display = ['image_id', 'image']
+
+admin.site.register(Images, ImageAdmin)

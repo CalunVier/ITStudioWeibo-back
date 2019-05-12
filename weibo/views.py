@@ -143,7 +143,7 @@ def get_weibo_info(request):
                 username = request.COOKIES.get('username', '')
                 if username:
                     user = User.objects.get(username=username)
-                    check_follow = user.userweiboinfo.following.filter(username=item_data['author_id'])
+                    check_follow = user.user_info.following.filter(username=item_data['author_id'])
                     if check_follow:
                         item_data['following'] = True
                     else:
@@ -153,17 +153,17 @@ def get_weibo_info(request):
             else:
                 item_data['following'] = False
 
-                # 处理视频和图片
-                if item.content_type == 1:  # img
-                    imgs_db = item.images.image.all()
-                    imgs_list = []
-                    for img in imgs_db:
-                        imgs_list.append(img.image.url)
-                    item_data['imgs'] = imgs_list
-                elif item.content_type == 2:  # video
-                    item = WeiboItem.objects.get()
-                    videos_db = item.video.video
-                    item_data['video'] = videos_db.video.url
+            # 处理视频和图片
+            if item.content_type == 1:  # img
+                imgs_db = item.images.image.all()
+                imgs_list = []
+                for img in imgs_db:
+                    imgs_list.append(img.image.url)
+                item_data['imgs'] = imgs_list
+            elif item.content_type == 2:  # video
+                item = WeiboItem.objects.get()
+                videos_db = item.video.video
+                item_data['video'] = videos_db.video.url
 
             # 成功，返回结果
             return HttpResponse(json.dumps(item_data))
@@ -599,7 +599,7 @@ def create_weibo(request):
         super_weibo_id = None
 
     try:
-        pictures = json.dumps(pictures)
+        pictures = json.loads(pictures)
     except:
         pictures = None
 

@@ -121,7 +121,7 @@ def to_create_weibo(content, user, content_type, imgs_id, video_id, super_weibo_
                 imgs_db = Images.objects.none()
                 for img_id in imgs_id:
                     try:
-                        image = Images.objects.get(image_id=img_id)
+                        image = Images.objects.filter(image_id=img_id)
                         imgs_db = imgs_db | image
                     except:
                         pass
