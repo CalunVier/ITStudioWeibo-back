@@ -777,11 +777,13 @@ def change_like_status(request):
             if weibo.weiboinfo.like.filter(id=user.id):
                 weibo.weiboinfo.like.remove(user)
                 weibo.weiboinfo.like_num -= 1
+                is_like = False
             else:
                 weibo.weiboinfo.like.add(user)
                 weibo.weiboinfo.like_num += 1
+                is_like = True
             weibo.weiboinfo.save()
-            return HttpResponse("{\"status\":0}")
+            return HttpResponse(json.dumps({'is_like': is_like, 'status':0}))
         else:
             return HttpResponse(status=404)
     except:

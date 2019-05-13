@@ -468,6 +468,7 @@ def get_user_home(request):
         user = check_logged(request)
         if user:
             response_data = {
+                "user_id":user.username,
                 "user_head": user.head.url,     # 头像
                 "user_info": user.intro,        # 用户简介
                 "follow_num": user.user_info.follow_num,    # follow数量
