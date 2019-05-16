@@ -447,7 +447,7 @@ def user_weibo_info(request):
         response_data = {
             "user_head": user.head.url,
             "follow_num": user_info_db.follow_num,
-            "fans_num": user_info_db.funs_num,
+            "fans_num": user_info_db.fans_num,
             "status": 0
         }
         return HttpResponse(json.dumps(response_data))
