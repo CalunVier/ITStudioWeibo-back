@@ -647,7 +647,7 @@ def upload_image(request):
             img_db.save()
             logger.debug('成功创建图片数据库文件')
             user.user_info.gallery.add(img_db)
-            return HttpResponse(json.dumps({'img_id': img_db.image_id, 'status': 0}, status=201))
+            return HttpResponse(json.dumps({'img_id': img_db.image_id, 'status': 0}), status=201)
         else:
             return HttpResponse(status=404)
     except:
