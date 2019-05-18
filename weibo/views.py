@@ -643,7 +643,9 @@ def upload_image(request):
                 # 没有发现上传的图片
                 return HttpResponse("{\"status\":7}", status=204)
             img_db = Images(image=image)
+            logger.debug('尝试图片数据库文件')
             img_db.save()
+            logger.debug('成功创建图片数据库文件')
             user.user_info.gallery.add(img_db)
             return HttpResponse(json.dumps({'img_id': img_db.image_id, 'status': 0}, status=201))
         else:
