@@ -61,16 +61,23 @@ def weibo_list_process_to_dict(request, weibo_db, page):
         # 处理视频和图片
         if item.content_type == 1:  # img
             logger.debug("处理图片")
-            imgs_db = item.images.image.all()
-            imgs_list = []
-            for img in imgs_db:
-                imgs_list.append(img.image.url)
-            item_data['imgs'] = imgs_list
+            try:
+                imgs_db = item.images.image.all()
+                imgs_list = []
+                for img in imgs_db:
+                    imgs_list.append(img.image.url)
+                item_data['imgs'] = imgs_list
+            except:
+                item.content_type = 0
+                item.save()
         elif item.content_type == 2:  # video
-            logger.debug("处理视频")
-            videos_db = item.video.video
-            item_data['video'] = videos_db.video.url
-
+            try:
+                logger.debug("处理视频")
+                videos_db = item.video.video
+                item_data['video'] = videos_db.video.url
+            except:
+                item.content_type = 0
+                item.save()
         # 添加到返回列
         weibo_list_response_date.append(item_data)
     response_data = {
