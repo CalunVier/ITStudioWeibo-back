@@ -637,6 +637,7 @@ def upload_image(request):
             if not user:
                 return HttpResponse(status_str % 4, status=401)
             try:
+                logger.debug('尝试获取照片')
                 image = request.FILES['image']
             except:
                 # 没有发现上传的图片
