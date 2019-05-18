@@ -673,7 +673,7 @@ def upload_video(request):
                 return HttpResponse("{\"status\":7}", status=204)
             video_db = Video(video=video)
             video_db.save()
-            return HttpResponse(json.dumps({'video_id': video_db.video_id, 'status': 0}, status=201))
+            return HttpResponse(json.dumps({'video_id': video_db.video_id, 'status': 0}), status=201)
         else:
             return HttpResponse(status=404)
     except:
