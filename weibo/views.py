@@ -299,7 +299,8 @@ def liker_list(request):
             for liker in like_db:
                 response_list.append({
                    "user_id": liker.username,
-                   "user_info": liker.intro
+                   "user_info": liker.intro,
+                   "head": liker.head.url
                 })
             return HttpResponse(json.dumps({"page": page, 'list': response_list, 'status': 0}))
         else:

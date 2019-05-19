@@ -36,11 +36,32 @@ def weibo_list_process_to_dict(request, weibo_db, page):
             while end_super_weibo.super_weibo:
                 end_super_weibo = end_super_weibo.super_weibo
             item_data['is_forward'] = True
-            item_data["super_weibo"] = {
+            super_weibo_dict = {
                 'weibo_id': end_super_weibo.id,
                 'content': end_super_weibo.content,
                 'author_id': end_super_weibo.author.id,
             }
+            # 处理图片和视频
+            if end_super_weibo.content_type == 1:  # img
+                logger.debug("处理super图片")
+                try:
+                    end_super_imgs_db = end_super_weibo.images.image.all()
+                    end_super_imgs_list = []
+                    for img in end_super_imgs_db:
+                        end_super_imgs_list.append(img.image.url)
+                    super_weibo_dict['imgs'] = end_super_imgs_list
+                except:
+                    end_super_weibo.content_type = 0
+                    end_super_weibo.save()
+            elif end_super_weibo.content_type == 2:  # video
+                try:
+                    logger.debug("处理super视频")
+                    end_super_videos_db = end_super_weibo.video.video
+                    super_weibo_dict['video'] = end_super_videos_db.video.url
+                except:
+                    end_super_weibo.content_type = 0
+                    end_super_weibo.save()
+
 
         user = check_logged(request)
         if user:
