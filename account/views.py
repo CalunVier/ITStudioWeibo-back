@@ -2,11 +2,9 @@ import datetime
 import json
 import logging
 import re
-
 from django.http import HttpResponse
-
 from ITstudioWeibo.calunvier_lib import page_of_queryset
-from ITstudioWeibo.general import check_email_verify_code_not_right
+from ITstudioWeibo.general import check_email_verify_code_not_right, get_pages_info
 from weibo.models import WeiboItem, Images
 from weibo.weibo_lib import weibo_list_process_to_dict
 from .account_lib import check_user_id_verify, check_password_verify, set_login_cookie, check_email_verify, to_register, \
@@ -306,7 +304,6 @@ def change_head(request):
     except:
         logger.debug('未知错误')
         return HttpResponse("{\"status\":6}", status=500)
-# todo 微博添加from信息
 
 
 def change_username(request):
@@ -666,12 +663,14 @@ def get_gallery(request):
         status
             0：成功
             1：位置用户
+            3：错误的日期
             6：未知错误
     :param request:
     :return:
     """
     try:
         if request.method == 'GET':
+            page, num = get_pages_info(request)
             try:
                 user = User.objects.get(username=request.GET.get('user_id', ''))
             except:
@@ -681,6 +680,7 @@ def get_gallery(request):
                 logger.debug("错误的日期")
                 return HttpResponse(status_str % 3, status=406)
             gallery = user.user_info.gallery.filter(upload_time__year=int(time.group(1)), upload_time__month=int(time.group(2)))
+            gallery = page_of_queryset(gallery, page, num)
             response_list = []
             for img in gallery:
                 response_list.append({'url': img.image.url, 'time': img.upload_time.timestamp()})
