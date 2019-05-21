@@ -121,7 +121,8 @@ class Notice(models.Model):
     type_choice = (
         (0, '文本'),
         (1, '@'),
-        (2, '官方推送')
+        (2, '官方推送'),
+        (3, '评论')
     )
     sender = models.ForeignKey('account.User', related_name='i_sent', verbose_name='发件人')
     recipient = models.ForeignKey('account.User', related_name='my_notice', verbose_name='收件人')
@@ -129,7 +130,7 @@ class Notice(models.Model):
     n_type = models.IntegerField(choices=type_choice, verbose_name='消息类型')
     read = models.BooleanField(default=False, verbose_name=u'已读')
     time = models.DateTimeField(auto_now=True, verbose_name=u'时间')
-    other = models.CharField(max_length=256, verbose_name='备注')
+    other = models.CharField(max_length=256,null=True, blank=True, verbose_name='备注')
 
 
 # 微博_图片表

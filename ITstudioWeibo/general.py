@@ -67,3 +67,13 @@ def i_get_email_verify_code(request):
         return HttpResponse(status=404)
 
 
+def get_pages_info(request):
+    try:
+        page = int(request.GET.get("page", 1))
+    except:
+        page = 1
+    try:
+        num = int(request.GET.get("num", 10))
+    except:
+        num = 10
+    return page, num

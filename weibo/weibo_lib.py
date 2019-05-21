@@ -197,7 +197,9 @@ def to_create_weibo(content, user, content_type, imgs_id, video_id, super_weibo_
 def create_weibo_comment(user, weibo, content):
     comment = WeiboComment(author=user, weibo=weibo, content=content)
     comment.save()
+    # notice处理
     at_notice_catcher(user, content, weibo.id)
+    Notice(sender=user, recipient=weibo.author, n_type=3, content='用户%s评论了你的微博' % weibo.author.username, other=json.dumps({'weibo_id': weibo.id})).save()
     return comment
 
 
@@ -226,9 +228,19 @@ def process_notice_to_list(notice_db):
                 'weibo_id': json.loads(n.other).get('weibo_id', ''),
                 'sender_id': n.sender.username,
             })
+        elif n.n_type == 3:
+            response_list.append({
+                'type': 3,
+                'notice_id': n.id,
+                'content': n.notice,
+                'read': n.read,
+                'time': n.time.timestamp(),
+                'sender_id': n.sender.username,
+                'weibo_id': json.loads(n.other).get('weibo_id', ''),
+            })
         else:
             response_list.append({
-                'type': 0,
+                'type': n.n_type,
                 'notice_id': n.id,
                 'content': n.notice,
                 'read': n.read,

@@ -1,15 +1,12 @@
-from django.shortcuts import render
 from django.http import HttpResponse
-from django.core.cache import cache
 from account.account_lib import check_logged
 from account.models import User
 from ITstudioWeibo.calunvier_lib import page_of_queryset
 from .models import WeiboItem, Images, WeiboToImage, Video, WeiboToVideo, WeiboComment, Notice
 from .weibo_lib import weibo_list_process_to_dict, to_create_weibo, create_weibo_comment, process_notice_to_list
 from .weibo_lib import search_weibo_lib, search_user_lib, process_user_to_list
-from django.db.models.query import QuerySet
+from ITstudioWeibo.general import get_pages_info
 import json
-import pathlib
 import re
 import datetime
 import logging
@@ -322,6 +319,7 @@ def get_notice_list(request):
     """
     try:
         if request.method == 'GET':
+            page, num = get_pages_info(request)
             try:
                 time = datetime.datetime.fromtimestamp(float(request.GET.get('time', '')))
             except:
@@ -333,10 +331,12 @@ def get_notice_list(request):
             if time:
                 # 检索数据库
                 ns_db = Notice.objects.select_related('sender').filter(recipient=user, time__gt=time)
+                page_of_queryset(ns_db, page, num)
                 response_list = process_notice_to_list(ns_db)
-                return HttpResponse(json.dumps({'list': response_list, 'status':0}))
+                return HttpResponse(json.dumps({'list': response_list, 'status': 0}))
             else:
                 ns_db = Notice.objects.all()
+                page_of_queryset(ns_db, page, num)
                 response_list = process_notice_to_list(ns_db)
                 return HttpResponse(json.dumps({'list': response_list, 'status': 0}))
         else:
