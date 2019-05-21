@@ -238,6 +238,16 @@ def process_notice_to_list(notice_db):
                 'sender_id': n.sender.username,
                 'weibo_id': json.loads(n.other).get('weibo_id', ''),
             })
+        elif n.n_type == 4:
+            response_list.append({
+                'type': 4,
+                'notice_id': n.id,
+                'content': n.notice,
+                'read': n.read,
+                'time': n.time.timestamp(),
+                'sender_id': n.sender.username,
+                'weibo_id': json.loads(n.other).get('weibo_id', ''),
+            })
         else:
             response_list.append({
                 'type': n.n_type,
@@ -249,6 +259,15 @@ def process_notice_to_list(notice_db):
                 'other': n.other
             })
     return response_list
+
+
+def process_notice_with_tag(ns_db, tag):
+    if tag == 'at':
+        return ns_db.filter(n_type=1)
+    elif tag == 'comment':
+        return ns_db.filter(n_type=3)
+    elif tag == 'like':
+        return ns_db.filter(n_type=4)
 
 
 def search_weibo_lib(key_word: str):

@@ -122,7 +122,8 @@ class Notice(models.Model):
         (0, '文本'),
         (1, '@'),
         (2, '官方推送'),
-        (3, '评论')
+        (3, '评论'),
+        (4, '点赞')
     )
     sender = models.ForeignKey('account.User', related_name='i_sent', verbose_name='发件人')
     recipient = models.ForeignKey('account.User', related_name='my_notice', verbose_name='收件人')

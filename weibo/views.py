@@ -4,7 +4,7 @@ from account.models import User
 from ITstudioWeibo.calunvier_lib import page_of_queryset
 from .models import WeiboItem, Images, WeiboToImage, Video, WeiboToVideo, WeiboComment, Notice
 from .weibo_lib import weibo_list_process_to_dict, to_create_weibo, create_weibo_comment, process_notice_to_list
-from .weibo_lib import search_weibo_lib, search_user_lib, process_user_to_list
+from .weibo_lib import search_weibo_lib, search_user_lib, process_user_to_list, process_notice_with_tag
 from ITstudioWeibo.general import get_pages_info
 import json
 import re
@@ -324,21 +324,28 @@ def get_notice_list(request):
                 time = datetime.datetime.fromtimestamp(float(request.GET.get('time', '')))
             except:
                 time = None
+            tag = request.GET.get('tag', '')
+            if tag not in ['at', 'comment', 'like']:
+                logger.debug('无效的tag')
+                return HttpResponse(status_str % 2, status=412)
             user = check_logged(request)
             if not user:
                 logger.debug("未登录")
                 return HttpResponse(status_str % 4, status=401)
+
             if time:
                 # 检索数据库
                 ns_db = Notice.objects.select_related('sender').filter(recipient=user, time__gt=time)
-                page_of_queryset(ns_db, page, num)
-                response_list = process_notice_to_list(ns_db)
-                return HttpResponse(json.dumps({'list': response_list, 'status': 0}))
+                ns_db = process_notice_with_tag(ns_db, tag)
+                ns_db = page_of_queryset(ns_db, page, num)
+                responset_list = process_notice_to_list(ns_db)
+                return HttpResponse(json.dumps({'list':responset_list, 'status': 0}))
             else:
-                ns_db = Notice.objects.all()
-                page_of_queryset(ns_db, page, num)
-                response_list = process_notice_to_list(ns_db)
-                return HttpResponse(json.dumps({'list': response_list, 'status': 0}))
+                ns_db = process_notice_with_tag(Notice.objects)
+                ns_db = process_notice_with_tag(ns_db, tag)
+                ns_db = page_of_queryset(ns_db, page, num)
+                responset_list = process_notice_to_list(ns_db)
+                return HttpResponse(json.dumps({'list': responset_list, 'status': 0}))
         else:
             return HttpResponse(status=404)
     except:
@@ -779,15 +786,18 @@ def change_like_status(request):
                 return HttpResponse("{\"status\":2}")
 
             if weibo.weiboinfo.like.filter(id=user.id):
+                # 点过赞了， 现在取消点赞
                 weibo.weiboinfo.like.remove(user)
                 weibo.weiboinfo.like_num -= 1
                 is_like = False
             else:
+                # 没点赞，现在点赞
                 weibo.weiboinfo.like.add(user)
                 weibo.weiboinfo.like_num += 1
                 is_like = True
+                Notice(sender=user, recipient=weibo.author, n_type=4, notice='%s点赞了你的微博' % user.username, other=json.dumps({'weibo_id': weibo.id}))
             weibo.weiboinfo.save()
-            return HttpResponse(json.dumps({'is_like': is_like, 'status':0}))
+            return HttpResponse(json.dumps({'is_like': is_like, 'status': 0}))
         else:
             return HttpResponse(status=404)
     except:
