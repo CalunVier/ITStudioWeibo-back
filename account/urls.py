@@ -13,6 +13,7 @@ urlpatterns = [
     url(r'^change_password', change_password),
     url(r'^change_head', change_head),
     url(r'^change_nick', change_username),
+    url(r'^change_user_info', change_user_info),
     url(r'^new_follow', new_follow),
     url(r"^forgot_password", forgot_password),
     url(r'^following_list', following_list),
