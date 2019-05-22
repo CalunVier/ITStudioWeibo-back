@@ -502,13 +502,17 @@ def user_info(request):
                 user = User.objects.get(username=user_id)
                 assert user.is_active
             except:
-                return HttpResponse("{\"status\":1}",status=404)
+                return HttpResponse("{\"status\":1}", status=404)
             response_data = {
-                "user_sex": '男' if user.sex==1 else '女' if user.sex==2 else '其他' if user.sex==3 else '未设定',
-                "user_birth": user.birth.strftime('%Y-%m-%d'),
+                "user_sex": '男' if user.sex == 1 else '女' if user.sex == 2 else '其他' if user.sex == 3 else '未设定',
                 "school": user.school,
-                "photo": [user.head.url]
+                "photo": [user.head.url],
+                'info': user.intro
             }
+            if user.birth:
+                response_data['user_birth'] = user.birth.strftime('%Y-%m-%d')
+            else:
+                response_data['user_birth'] = None
             return HttpResponse(json.dumps(response_data))
         else:
             return HttpResponse(status=404)
