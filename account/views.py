@@ -553,7 +553,12 @@ def my_weibo_list(request):
             # 判断tag是否有内容
             if tag == 'like':
                 # 检索数据库
-                weibo_db = user.like_weibo.all().exclude(is_active=False)
+                weibo_info_db = user.like_weibo.select_related('weibo').exclude(weibo__is_active=False)
+                weibo_info_db = page_of_queryset(weibo_info_db, page, num)
+                weibo_db = []
+                for info in weibo_info_db:
+                    weibo_db.append(info.weibo)
+                del weibo_info_db
             elif tag == 'collect':
                 weibo_db = user.user_info.collect_weibo.all().exclude(is_active=False)
             elif tag == 'original':
