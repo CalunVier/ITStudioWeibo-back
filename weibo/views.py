@@ -341,7 +341,7 @@ def get_notice_list(request):
                 responset_list = process_notice_to_list(ns_db)
                 return HttpResponse(json.dumps({'list':responset_list, 'status': 0}))
             else:
-                ns_db = process_notice_with_tag(Notice.objects)
+                ns_db = process_notice_with_tag(Notice.objects, tag=tag)
                 ns_db = process_notice_with_tag(ns_db, tag)
                 ns_db = page_of_queryset(ns_db, page, num)
                 responset_list = process_notice_to_list(ns_db)
