@@ -4,12 +4,13 @@ from account.models import User
 from ITstudioWeibo.calunvier_lib import page_of_queryset
 from .models import WeiboItem, Images, WeiboToImage, Video, WeiboToVideo, WeiboComment, Notice
 from .weibo_lib import weibo_list_process_to_dict, to_create_weibo, create_weibo_comment, process_notice_to_list
-from .weibo_lib import search_weibo_lib, search_user_lib, process_user_to_list, process_notice_with_tag
+from .weibo_lib import search_weibo_lib, search_user_lib, process_user_to_list, process_notice_with_tag, create_thumbnail
 from ITstudioWeibo.general import get_pages_info
 import json
 import re
 import datetime
 import logging
+import _thread
 
 
 logger = logging.getLogger('my_logger.weibo.view')
@@ -650,11 +651,17 @@ def upload_image(request):
             except:
                 # 没有发现上传的图片
                 return HttpResponse("{\"status\":7}", status=204)
+            if image.size > 536870912:
+                logger.debug('图片太大'+str(image.size))
+                return HttpResponse(status_str % 3, status=413)
             img_db = Images(image=image)
             logger.debug('尝试图片数据库文件')
             img_db.save()
             logger.debug('成功创建图片数据库文件')
             user.user_info.gallery.add(img_db)
+            # 创建缩略图
+            _thread.start_new_thread(create_thumbnail, (image,img_db))
+
             return HttpResponse(json.dumps({'img_id': img_db.image_id, 'status': 0}), status=201)
         else:
             return HttpResponse(status=404)
@@ -679,6 +686,9 @@ def upload_video(request):
             except:
                 logger.debug("没有发现上传的视频")
                 return HttpResponse("{\"status\":7}", status=204)
+            if video.size > 536870912:
+                logger.debug('视频太大'+str(video.size))
+                return HttpResponse(status_str % 3, status=413)
             video_db = Video(video=video)
             video_db.save()
             return HttpResponse(json.dumps({'video_id': video_db.video_id, 'status': 0}), status=201)

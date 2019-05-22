@@ -6,6 +6,7 @@ from django.core.cache import cache
 import json
 import logging
 import re
+from PIL import Image
 
 
 logger = logging.getLogger("my_logger.weibo.lib")
@@ -318,3 +319,14 @@ def process_user_to_list(user_db):
             'user_info': user.intro
         })
     return response_list
+
+
+def create_thumbnail(image, img_db):
+    try:
+        im = Image.frombuffer(image.mode, image.size, image.open)
+        im.thumbnail((480, 480))
+        re_name = re.match(r'(.+)(\.\w+)$', img_db.image.name)
+        im.save(img_db.image.path[:-len(img_db.image.path)] + re_name.group(1) + '_tb_480' + re_name.group(2))
+        logger.debug('缩略图已保存到:'+str(img_db.image.path[:-len(img_db.image.path)] + re_name.group(1) + '_tb_480' + re_name.group(2)))
+    except:
+        logger.error("生成缩略图失败")
