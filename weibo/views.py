@@ -660,7 +660,7 @@ def upload_image(request):
             logger.debug('成功创建图片数据库文件')
             user.user_info.gallery.add(img_db)
             # 创建缩略图
-            _thread.start_new_thread(create_thumbnail, (image,img_db))
+            _thread.start_new_thread(create_thumbnail, (img_db,))
 
             return HttpResponse(json.dumps({'img_id': img_db.image_id, 'status': 0}), status=201)
         else:

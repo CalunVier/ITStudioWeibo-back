@@ -321,9 +321,9 @@ def process_user_to_list(user_db):
     return response_list
 
 
-def create_thumbnail(image, img_db):
+def create_thumbnail(img_db):
     try:
-        im = Image.frombuffer(image.mode, image.size, image.open)
+        im = Image.open(img_db.image.path)
         logger.debug('获取到的image对象')
         im.thumbnail((480, 480))
         logger.debug('生成缩略')
