@@ -328,8 +328,8 @@ def create_thumbnail(img_db):
         im.thumbnail((480, 480))
         logger.debug('生成缩略')
         re_name = re.match(r'(.+)(\.\w+)$', img_db.image.name)
-        logger.debug('尝试把缩略图保存到:'+img_db.image.path[:-len(img_db.image.path)] + re_name.group(1) + '_tb_480' + re_name.group(2))
-        im.save(img_db.image.path[:-len(img_db.image.path)] + re_name.group(1) + '_tb_480' + re_name.group(2))
-        logger.debug('缩略图已保存到:'+str(img_db.image.path[:-len(img_db.image.path)] + re_name.group(1) + '_tb_480' + re_name.group(2)))
+        logger.debug('尝试把缩略图保存到:'+'media/'+img_db.image.path[:-len(img_db.image.path)] + re_name.group(1) + '_tb_480' + re_name.group(2))
+        im.save('media/'+img_db.image.path[:-len(img_db.image.path)] + re_name.group(1) + '_tb_480' + re_name.group(2))
+        logger.debug('缩略图已保存到:'+str('media/'+img_db.image.path[:-len(img_db.image.path)] + re_name.group(1) + '_tb_480' + re_name.group(2)))
     except:
         logger.error("生成缩略图失败")
