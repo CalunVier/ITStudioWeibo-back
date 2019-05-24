@@ -16,99 +16,103 @@ logger = logging.getLogger("my_logger.weibo.lib")
 def weibo_list_process_to_dict(request, weibo_db, page):
     weibo_list_response_date = []
     for item in weibo_db:
-        item_data = {
-            'weibo_id': item.id,
-            "type": 'text' if item.content_type == 0 else 'image' if item.content_type == 1 else 'video',
-            "content": item.content,
-            "author_id": item.author.username,
-            "author_head": item.author.head.url,
-            "forward_num": item.weiboinfo.forward_num,
-            "comment_num": item.weiboinfo.comment_num,
-            "like_num": item.weiboinfo.like_num,
-            "time": item.create_time.timestamp(),
-            'is_forward': False,
-            'following': False,
-            'is_like': False,
-        }
-
-        # 处理转发情况
-        if item.super_weibo:
-            end_super_weibo = item.super_weibo
-            while end_super_weibo.super_weibo:
-                end_super_weibo = end_super_weibo.super_weibo
-            item_data['is_forward'] = True
-            super_weibo_dict = {
-                'weibo_id': end_super_weibo.id,
-                'content': end_super_weibo.content,
-                'author_id': end_super_weibo.author.username,
-                'type': 'text' if end_super_weibo.content_type == 0 else 'image' if end_super_weibo.content_type == 1 else 'video',
-            }
-            # 处理图片和视频
-            if end_super_weibo.content_type == 1:  # img
-                logger.debug("处理super图片")
-                try:
-                    end_super_imgs_db = end_super_weibo.images.image.all()
-                    end_super_imgs_list = []
-                    for img in end_super_imgs_db:
-                        end_super_imgs_list.append(img.image.url)
-                    super_weibo_dict['imgs'] = end_super_imgs_list
-                except:
-                    end_super_weibo.content_type = 0
-                    end_super_weibo.save()
-            elif end_super_weibo.content_type == 2:  # video
-                try:
-                    logger.debug("处理super视频")
-                    end_super_videos_db = end_super_weibo.video.video
-                    super_weibo_dict['video'] = end_super_videos_db.video.url
-                except:
-                    end_super_weibo.content_type = 0
-                    end_super_weibo.save()
-            item_data['super'] = super_weibo_dict
-
-        user = check_logged(request)
-        if user:
-            # 处理点赞情况
-            logger.debug('处理点赞情况')
-            if item.weiboinfo.like.filter(id=user.id):
-                item_data['is_like'] = True
-
-            # 检查是否following
-            logger.debug("检查是否following")
-            user = check_logged(request)
-            if user:
-                logger.debug("用户已登录")
-                check_follow = user.user_info.following.filter(username=item_data['author_id'])
-                if check_follow:
-                    item_data['following'] = True
-
-        # 处理视频和图片
-        if item.content_type == 1:  # img
-            logger.debug("处理图片")
-            try:
-                imgs_db = item.images.image.all()
-                imgs_list = []
-                for img in imgs_db:
-                    imgs_list.append(img.image.url)
-                item_data['imgs'] = imgs_list
-            except:
-                item.content_type = 0
-                item.save()
-        elif item.content_type == 2:  # video
-            try:
-                logger.debug("处理视频")
-                videos_db = item.video.video
-                item_data['video'] = videos_db.video.url
-            except:
-                item.content_type = 0
-                item.save()
-        # 添加到返回列
-        weibo_list_response_date.append(item_data)
+        # 获取微博信息字典并添加到返回列
+        weibo_list_response_date.append(weibo_db_to_dict(request, item))
     response_data = {
         'page': page,
         'list': weibo_list_response_date,
         'status': 0,
     }
     return response_data
+
+
+def weibo_db_to_dict(request, item):
+    item_data = {
+        'weibo_id': item.id,
+        "type": 'text' if item.content_type == 0 else 'image' if item.content_type == 1 else 'video',
+        "content": item.content,
+        "author_id": item.author.username,
+        "author_head": item.author.head.url,
+        "forward_num": item.weiboinfo.forward_num,
+        "comment_num": item.weiboinfo.comment_num,
+        "like_num": item.weiboinfo.like_num,
+        "time": item.create_time.timestamp(),
+        'is_forward': False,
+        'following': False,
+        'is_like': False,
+    }
+
+    # 处理转发情况
+    if item.super_weibo:
+        end_super_weibo = item.super_weibo
+        while end_super_weibo.super_weibo:
+            end_super_weibo = end_super_weibo.super_weibo
+        item_data['is_forward'] = True
+        super_weibo_dict = {
+            'weibo_id': end_super_weibo.id,
+            'content': end_super_weibo.content,
+            'author_id': end_super_weibo.author.username,
+            'type': 'text' if end_super_weibo.content_type == 0 else 'image' if end_super_weibo.content_type == 1 else 'video',
+        }
+        # 处理图片和视频
+        if end_super_weibo.content_type == 1:  # img
+            logger.debug("处理super图片")
+            try:
+                end_super_imgs_db = end_super_weibo.images.image.all()
+                end_super_imgs_list = []
+                for img in end_super_imgs_db:
+                    end_super_imgs_list.append(img.image.url)
+                super_weibo_dict['imgs'] = end_super_imgs_list
+            except:
+                end_super_weibo.content_type = 0
+                end_super_weibo.save()
+        elif end_super_weibo.content_type == 2:  # video
+            try:
+                logger.debug("处理super视频")
+                end_super_videos_db = end_super_weibo.video.video
+                super_weibo_dict['video'] = end_super_videos_db.video.url
+            except:
+                end_super_weibo.content_type = 0
+                end_super_weibo.save()
+        item_data['super'] = super_weibo_dict
+
+    user = check_logged(request)
+    if user:
+        # 处理点赞情况
+        logger.debug('处理点赞情况')
+        if item.weiboinfo.like.filter(id=user.id):
+            item_data['is_like'] = True
+
+        # 检查是否following
+        logger.debug("检查是否following")
+        user = check_logged(request)
+        if user:
+            logger.debug("用户已登录")
+            check_follow = user.user_info.following.filter(username=item_data['author_id'])
+            if check_follow:
+                item_data['following'] = True
+
+    # 处理视频和图片
+    if item.content_type == 1:  # img
+        logger.debug("处理图片")
+        try:
+            imgs_db = item.images.image.all()
+            imgs_list = []
+            for img in imgs_db:
+                imgs_list.append(img.image.url)
+            item_data['imgs'] = imgs_list
+        except:
+            item.content_type = 0
+            item.save()
+    elif item.content_type == 2:  # video
+        try:
+            logger.debug("处理视频")
+            videos_db = item.video.video
+            item_data['video'] = videos_db.video.url
+        except:
+            item.content_type = 0
+            item.save()
+    return item_data
 
 
 # 创建微博

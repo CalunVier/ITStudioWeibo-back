@@ -2,9 +2,10 @@ from django.http import HttpResponse
 from account.account_lib import check_logged
 from account.models import User
 from ITstudioWeibo.calunvier_lib import page_of_queryset
-from .models import WeiboItem, Images, WeiboToImage, Video, WeiboToVideo, WeiboComment, Notice
+from .models import WeiboItem, Images, Video, WeiboComment, Notice
 from .weibo_lib import weibo_list_process_to_dict, to_create_weibo, create_weibo_comment, process_notice_to_list
-from .weibo_lib import search_weibo_lib, search_user_lib, process_user_to_list, process_notice_with_tag, create_thumbnail
+from .weibo_lib import search_weibo_lib, search_user_lib, process_user_to_list, process_notice_with_tag
+from .weibo_lib import weibo_db_to_dict, create_thumbnail
 from ITstudioWeibo.general import get_pages_info
 import json
 import re
@@ -102,69 +103,8 @@ def get_weibo_info(request):
             except:
                 logger.debug('未知的微博')
                 return HttpResponse("{\"status\":3}", status=404)
-            item_data = {
-                "type": 'text' if item.content_type == 0 else 'image' if item.content_type == 1 else 'video',
-                "content": item.content,
-                "weibo_id": weibo_id,
-                "author_id": item.author.username,
-                "author_head": item.author.head.url,
-                "forward_num": item.weiboinfo.forward_num,
-                "comment_num": item.weiboinfo.comment_num,
-                "like_num": item.weiboinfo.like_num,
-                "time": item.create_time.timestamp(),
-                "status": 0
-            }
-
-            # 处理转发情况
-            if item.super_weibo:
-                end_super_weibo = item.super_weibo
-                while end_super_weibo.super_weibo:
-                    end_super_weibo = end_super_weibo.super_weibo
-                item_data['is_forward'] = True
-                item_data["super_weibo"] = {
-                    'weibo_id': end_super_weibo.id,
-                    'content': end_super_weibo.content,
-                    'author_id': end_super_weibo.author.id,
-                }
-            else:
-                item_data['is_forward'] = False
-
-            user = check_logged(request)
-            if user:
-                # 处理点赞情况
-                logger.debug('处理点赞情况')
-                if item.weiboinfo.like.filter(id=user.id):
-                    item_data['is_like'] = True
-
-                # 检查是否following
-
-                username = request.COOKIES.get('username', '')
-                if username:
-                    user = User.objects.get(username=username)
-                    check_follow = user.user_info.following.filter(username=item_data['author_id'])
-                    if check_follow:
-                        item_data['following'] = True
-                    else:
-                        item_data['following'] = False
-                else:
-                    item_data['following'] = False
-            else:
-                item_data['following'] = False
-
-            # 处理视频和图片
-            if item.content_type == 1:  # img
-                imgs_db = item.images.image.all()
-                imgs_list = []
-                for img in imgs_db:
-                    imgs_list.append(img.image.url)
-                item_data['imgs'] = imgs_list
-            elif item.content_type == 2:  # video
-                item = WeiboItem.objects.get()
-                videos_db = item.video.video
-                item_data['video'] = videos_db.video.url
-
             # 成功，返回结果
-            return HttpResponse(json.dumps(item_data))
+            return HttpResponse(json.dumps(weibo_db_to_dict(request, item)))
         else:
             return HttpResponse(status=404)
     except:
