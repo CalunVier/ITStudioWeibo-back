@@ -114,7 +114,7 @@ def login(request):
                 if not check_email_verify(post_body_json['user_key']):
                     # 无效的用户ID
                     logger.info('无效的用户索引')
-                    return HttpResponse("{\"result\":1}", status=400)
+                    return HttpResponse("{\"status\":1}", status=400)
                 if not check_password_verify(post_body_json['password']):
                     # 无效的密码
                     logger.info('无效的密码')

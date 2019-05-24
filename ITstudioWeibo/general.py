@@ -43,6 +43,7 @@ def to_send_email_verify_code(to_email, use):
         logger.error(str(e))
         logger.error('出现异常,发送邮件到:%s失败,use:%s' % (to_email, use))
 
+
 def i_get_email_verify_code(request):
     if request.method == 'GET':
         logger.debug('收到GET请求')
