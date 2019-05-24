@@ -1,6 +1,6 @@
 from django.http import HttpResponse
 from account.account_lib import check_logged
-from account.models import User
+import traceback
 from ITstudioWeibo.calunvier_lib import page_of_queryset
 from .models import WeiboItem, Images, Video, WeiboComment, Notice
 from .weibo_lib import weibo_list_process_to_dict, to_create_weibo, create_weibo_comment, process_notice_to_list
@@ -33,10 +33,7 @@ def get_item_list(request):
     :return:
     """
     try:
-        logger.debug('get_item_list()')
         if request.method == 'GET':
-            logger.debug('收到post请求')
-
             # 读取request Query
             try:
                 page = int(request.GET.get('page', 1))
@@ -80,6 +77,7 @@ def get_item_list(request):
             # 非GET不接
             return HttpResponse(status=404)
     except:
+        logger.error(traceback.format_exc())
         logger.error('未知错误')
         return HttpResponse("{\"status\":6}", status=500)
 
@@ -108,6 +106,8 @@ def get_weibo_info(request):
         else:
             return HttpResponse(status=404)
     except:
+        logger.error(traceback.format_exc())
+        logger.error('未知错误')
         return HttpResponse("{\"status\":6}", status=500)
 
 
@@ -192,11 +192,13 @@ def comment_like_list(request):
                     response_list.append(comment_dict)
                 return HttpResponse(json.dumps({"page": page, "list": response_list, "status": 0}))
             else:
-                logger.debug("未定义的tag")
+                logger.debug("未定义的tag：%s" % tag)
                 return HttpResponse(status_str % 3, status=406)
         else:
             return HttpResponse(status=404)
     except:
+        logger.error(traceback.format_exc())
+        logger.error('未知错误')
         HttpResponse("{\"status\":6}", status=500)
 
 
@@ -213,7 +215,6 @@ def liker_list(request):
     """
     try:
         if request.method == 'GET':
-            logger.debug('收到GET请求')
             try:
                 weibo = WeiboItem.objects.select_related('weiboinfo').get(id=int(request.GET.get('weibo_id', '')))
             except:
@@ -244,6 +245,8 @@ def liker_list(request):
         else:
             return HttpResponse(status=404)
     except:
+        logger.error(traceback.format_exc())
+        logger.debug('未知错误')
         return HttpResponse(status_str % 6, status=500)
 
 
