@@ -56,7 +56,7 @@ def set_login_cookie(request, response: HttpResponse, user: User):
         logger.debug('向session中写入user.username')
         request.session['login_time'] = time.time()
         logger.debug('向session中写入time.time()')
-        response.set_cookie('username', user.username)
+        response.set_cookie('username', user.username.encode('ISO-8859-1'))
         logger.debug('向cookie中写入user.username')
         logger.info('登陆成功')
     except Exception:
