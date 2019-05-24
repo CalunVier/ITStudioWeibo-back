@@ -119,9 +119,13 @@ def check_email_verify(email):
 def check_logged(request) -> User:
     if time.time()-request.session.get('login_time', 0) < 86400:    # 检查登陆是否过期
         # 检查登陆是否异常
-        if request.COOKIES.get('username', '') and request.COOKIES.get('username') == request.session.get('username', ''):
+        try:
+            username = json.loads(request.COOKIES.get('username'))
+        except:
+            return None
+        if username == request.session.get('username', ''):
             # 检查是否存在于数据库
-            user = User.objects.filter(username=request.COOKIES.get('username'))
+            user = User.objects.filter(username=username)
             if user:
                 # 检查用户是否为active
                 if user[0].is_active:
