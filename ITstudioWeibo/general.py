@@ -23,22 +23,24 @@ def check_email_verify_code_not_right(verify_id, verify_code, use):
 
 
 def to_send_email_verify_code(to_email, use):
-
-    # 生成验证码
-    code = str(random.randint(100000, 999999))
-    logger.debug("验证码生成")
-    # 发送邮件部分
-    send_mail(
-        'ITStudio 微博 验证码',
-        '您的验证码为：'+code+",验证码在60分钟内有效（请勿回复）",
-        'itstudiomtimea@163.com',
-        [to_email],
-        fail_silently=False,
-    )
-    logger.debug('邮件发送成功')
-    logger.debug('写入缓存')
-    cache.set('email_verify_'+to_email, {'sent_time': time.time(), 'code': code, 'use': use}, 3600)
-
+    try:
+        # 生成验证码
+        code = str(random.randint(100000, 999999))
+        logger.debug("验证码生成")
+        # 发送邮件部分
+        send_mail(
+            'ITStudio 微博 验证码',
+            '您的验证码为：'+code+",验证码在60分钟内有效（请勿回复）",
+            'itstudiomtimea@163.com',
+            [to_email],
+            fail_silently=False,
+        )
+        logger.debug('邮件发送成功')
+        logger.debug('写入缓存')
+        cache.set('email_verify_'+to_email, {'sent_time': time.time(), 'code': code, 'use': use}, 3600)
+    except Exception as e:
+        logger.error(str(e))
+        logger.error('出现异常,发送邮件到:%s失败,use:%s' % (to_email, use))
 
 def i_get_email_verify_code(request):
     if request.method == 'GET':
