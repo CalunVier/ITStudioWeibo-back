@@ -62,7 +62,7 @@ def weibo_list_process_to_dict(request, weibo_db, page):
                 except:
                     end_super_weibo.content_type = 0
                     end_super_weibo.save()
-
+            item_data['super'] = super_weibo_dict
 
         user = check_logged(request)
         if user:
