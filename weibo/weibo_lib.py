@@ -41,6 +41,7 @@ def weibo_list_process_to_dict(request, weibo_db, page):
                 'weibo_id': end_super_weibo.id,
                 'content': end_super_weibo.content,
                 'author_id': end_super_weibo.author.username,
+                'type': 'text' if end_super_weibo.content_type == 0 else 'image' if end_super_weibo.content_type == 1 else 'video',
             }
             # 处理图片和视频
             if end_super_weibo.content_type == 1:  # img
