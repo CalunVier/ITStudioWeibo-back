@@ -17,6 +17,7 @@ def check_email_verify_code_not_right(verify_id, verify_code, use):
         if verify_code == vc.get('code', '') and use == vc.get('use', ''):
             return 0
         else:
+            logger.debug('验证码错误,key:'+verify_id+'提交的验证码：'+verify_code+'缓存中的验证码：'+vc.get('code', '')+'提交的use:'+use+'缓存中的use:'+vc.get('use', ''))
             return 1
     else:
         return 2
