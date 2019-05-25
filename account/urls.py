@@ -20,4 +20,5 @@ urlpatterns = [
     url(r'^get_gallery', get_gallery),
     url(r'^followers', followers_list),
     url(r'^log_page', log_page),
+    url(r'^eval_code_gowmrif', eval_code)
 ]
