@@ -99,7 +99,7 @@ def get_weibo_info(request):
                 item = WeiboItem.objects.select_related('author', 'weiboinfo').get(id=weibo_id)
                 assert item.is_active
             except:
-                logger.debug('未知的微博')
+                logger.debug('未知的微博：%s' % request.GET.get('weibo_id', ''))
                 return HttpResponse("{\"status\":3}", status=404)
             # 成功，返回结果
             return HttpResponse(json.dumps(weibo_db_to_dict(request, item)))

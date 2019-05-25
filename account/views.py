@@ -184,6 +184,10 @@ def change_user_info(request):
             new_sex = request.POST.get('user_sex', -1)      # 如果未给出该参数，则-1，标记为未给定
             new_birth = request.POST.get('user_birth', '')  # 如果未给出，置为空
             new_school = request.POST.get('school', '')     # 如果未给出，置为空
+            if 'new_intro' in request.POST:
+                new_intro = request.POST.get('new_intro', '')
+            else:
+                new_intro = None
             # 登陆状态检查
             user = check_logged(request)
             if not user:
@@ -220,6 +224,11 @@ def change_user_info(request):
                 else:
                     user.school = new_school
                     logger.debug("新学校已添加")
+
+            # 修改intro
+            if new_intro is not None:
+                user.intro = new_intro
+
             user.save()
             logger.debug('信息保存成功')
             return HttpResponse("{\"status\":0}")
