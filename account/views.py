@@ -692,6 +692,7 @@ def get_gallery(request):
             page, num = get_pages_info(request)
             try:
                 user = User.objects.get(username=request.GET.get('user_id', ''))
+                logger.debug('检索到用户:'+str(user))
             except:
                 return HttpResponse(status_str % 1, status=404)
             time = re.match(r'^(\d+)-(\d+)', request.GET.get('time', ''))

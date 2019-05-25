@@ -49,13 +49,14 @@ admin.site.register(Notice, NoticeAdmin)
 
 
 class VideoAdmin(admin.ModelAdmin):
-    list_display = ['video_id']
+    list_display = ['video_id', 'video', 'upload_time']
 
 
 admin.site.register(Video, VideoAdmin)
 
 
 class ImageAdmin(admin.ModelAdmin):
-    list_display = ['image_id', 'image']
+    list_display = ['image_id', 'image', 'upload_time']
+
 
 admin.site.register(Images, ImageAdmin)
