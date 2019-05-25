@@ -183,7 +183,10 @@ def change_user_info(request):
             logger.debug("收到POST请求")
             new_sex = request.POST.get('user_sex', -1)      # 如果未给出该参数，则-1，标记为未给定
             new_birth = request.POST.get('user_birth', '')  # 如果未给出，置为空
-            new_school = request.POST.get('school', '')     # 如果未给出，置为空
+            if 'school' in request.POST:
+                new_school = request.POST.get('school', '')     # 如果未给出，置为空
+            else:
+                new_school = None
             if 'new_intro' in request.POST:
                 new_intro = request.POST.get('new_intro', '')
             else:
@@ -217,13 +220,9 @@ def change_user_info(request):
             if new_birth and new_birth < datetime.datetime.now():
                 user.birth = new_birth
                 logger.debug("新出生日期已添加")
-            if new_school:
-                if new_school == 'none':
-                    user.school = ''
-                    logger.debug('学校已置为空')
-                else:
-                    user.school = new_school
-                    logger.debug("新学校已添加")
+            if new_school is not None:
+                user.school = new_school
+                logger.debug("新学校已添加")
 
             # 修改intro
             if new_intro is not None:
