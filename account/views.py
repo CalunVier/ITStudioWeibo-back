@@ -439,14 +439,14 @@ def user_weibo_info(request):
     if request.method == 'GET':
         user_id = request.GET.get('user_id')
         try:
-            user = User.objects.get(username=user_id)
-            user_info_db = UserWeiboInfo.objects.get(user_id = user.id)
+            user = User.objects.select_related('user_info').get(username=user_id)
         except User.DoesNotExist:
             return HttpResponse("{\"status\":1}", status=403)
         response_data = {
             "user_head": user.head.url,
-            "follow_num": user_info_db.follow_num,
-            "fans_num": user_info_db.fans_num,
+            "follow_num": user.user_info.follow_num,
+            "fans_num": user.user_info.fans_num,
+            'user_intro': user.intro,
             "status": 0
         }
         return HttpResponse(json.dumps(response_data))
