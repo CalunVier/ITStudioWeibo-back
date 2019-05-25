@@ -693,14 +693,13 @@ def get_gallery(request):
             page, num = get_pages_info(request)
             try:
                 user = User.objects.get(username=request.GET.get('user_id', ''))
-                logger.debug('检索到用户:'+str(user))
             except:
                 return HttpResponse(status_str % 1, status=404)
             time = re.match(r'^(\d+)-(\d+)', request.GET.get('time', ''))
             if not time or not (0 < int(time.group(2)) < 13 and 1970 < int(time.group(1)) < 2020):
                 logger.debug("错误的日期")
                 return HttpResponse(status_str % 3, status=406)
-            gallery = user.user_info.gallery.filter(upload_time__gte='%s-%s-1' % (time.group(1), time.group(2)), upload_time__lt='%s-%d-1' % (time.group(1), int(time.group(2)))+1)
+            gallery = user.user_info.gallery.filter(upload_time__gte='%s-%s-1' % (time.group(1), time.group(2)), upload_time__lt='%s-%d-1' % (time.group(1), int(time.group(2))+1))
             gallery = page_of_queryset(gallery, page, num)
             response_list = []
             for img in gallery:
