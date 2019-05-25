@@ -755,7 +755,7 @@ def change_like_status(request):
                 weibo.weiboinfo.like.add(user)
                 weibo.weiboinfo.like_num += 1
                 is_like = True
-                Notice(sender=user, recipient=weibo.author, n_type=4, notice='%s点赞了你的微博' % user.username, other=json.dumps({'weibo_id': weibo.id}))
+                Notice(sender=user, recipient=weibo.author, n_type=4, notice='%s点赞了你的微博' % user.username, other=json.dumps({'weibo_id': weibo.id})).save()
             weibo.weiboinfo.save()
             return HttpResponse(json.dumps({'is_like': is_like, 'status': 0}))
         else:
