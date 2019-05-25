@@ -7,6 +7,7 @@ import json
 import logging
 import re
 from PIL import Image
+import traceback
 
 
 logger = logging.getLogger("my_logger.weibo.lib")
@@ -57,7 +58,6 @@ def weibo_db_to_dict(request, item):
         }
         # 处理图片和视频
         if end_super_weibo.content_type == 1:  # img
-            logger.debug("处理super图片")
             try:
                 end_super_imgs_db = end_super_weibo.images.image.all()
                 end_super_imgs_list = []
@@ -65,31 +65,35 @@ def weibo_db_to_dict(request, item):
                     end_super_imgs_list.append(img.image.url)
                 super_weibo_dict['imgs'] = end_super_imgs_list
             except:
+                logger.error('super微博图片处理异常, weibo_id:%d' % end_super_weibo.id)
+                logger.error('image_list: %s' % str(end_super_imgs_list))
+                logger.error('异常image:%s' % img)
+                logger.error(traceback.format_exc())
                 end_super_weibo.content_type = 0
                 end_super_weibo.save()
+                logger.error('已将微博类型重置为0')
         elif end_super_weibo.content_type == 2:  # video
             try:
-                logger.debug("处理super视频")
                 end_super_videos_db = end_super_weibo.video.video
                 super_weibo_dict['video'] = end_super_videos_db.video.url
             except:
+                logger.error('super微博视频处理异常, weibo_id:%d' % end_super_weibo.id)
+                logger.error('异常video:%s' % end_super_videos_db.video.url)
                 end_super_weibo.content_type = 0
                 end_super_weibo.save()
+                logger.error('已将微博类型重置为0')
         item_data['super'] = super_weibo_dict
 
     # 处理登陆后的各种状态
     user = check_logged(request)
     if user:
         # 处理点赞情况
-        logger.debug('处理点赞情况')
         if item.weiboinfo.like.filter(id=user.id):
             item_data['is_like'] = True
 
         # 检查是否following
-        logger.debug("检查是否following")
         user = check_logged(request)
         if user:
-            logger.debug("用户已登录")
             check_follow = user.user_info.following.filter(username=item_data['author_id'])
             if check_follow:
                 item_data['following'] = True
@@ -97,10 +101,11 @@ def weibo_db_to_dict(request, item):
         # 检查是否收藏
         if user.user_info.collect_weibo.filter(id=item.id):
             item_data['collected']=True
+    else:
+        logger.debug('未登录')
 
     # 处理视频和图片
     if item.content_type == 1:  # img
-        logger.debug("处理图片")
         try:
             imgs_db = item.images.image.all()
             imgs_list = []
@@ -108,16 +113,22 @@ def weibo_db_to_dict(request, item):
                 imgs_list.append(img.image.url)
             item_data['imgs'] = imgs_list
         except:
+            logger.error('微博图片处理异常, weibo_id:%d' % item.id)
+            logger.error('image_list: %s' % str(imgs_list))
+            logger.error('异常image:%s' % img)
             item.content_type = 0
             item.save()
+            logger.error('已将微博类型重置为0')
     elif item.content_type == 2:  # video
         try:
-            logger.debug("处理视频")
             videos_db = item.video.video
             item_data['video'] = videos_db.video.url
         except:
+            logger.error('微博视频处理异常, weibo_id:%d' % item.id)
+            logger.error('异常video:%s' % videos_db.video.url)
             item.content_type = 0
             item.save()
+            logger.error('已将微博类型重置为0')
     return item_data
 
 
@@ -144,12 +155,11 @@ def to_create_weibo(content, user, content_type, imgs_id, video_id, super_weibo_
         # 处理转发
         if super_weibo_id:
             try:
-                logger.debug('处理转发')
                 super_weibo = WeiboItem.objects.get(id=super_weibo_id)
                 weibo.super_weibo = super_weibo
                 content_type = 0
             except:
-                logger.debug('无效的super微博')
+                logger.debug('无效的super微博：%s' % super_weibo_id)
                 return HttpResponse("{\"status\":5}", status=500)
         weibo.save()
 
@@ -157,7 +167,6 @@ def to_create_weibo(content, user, content_type, imgs_id, video_id, super_weibo_
 
         # 分情况处理附加信息
         if content_type == 1:
-            logger.debug('微博类型为图片')
             if imgs_id:
                 imgs_db = Images.objects.none()
                 for img_id in imgs_id:
@@ -165,7 +174,8 @@ def to_create_weibo(content, user, content_type, imgs_id, video_id, super_weibo_
                         image = Images.objects.filter(image_id=img_id)
                         imgs_db = imgs_db | image
                     except:
-                        pass
+                        logger.error('处理图片时出现异常')
+                        logger.error(traceback.format_exc())
 
                 if imgs_db:
                     weibo.content_type = 1
@@ -183,7 +193,6 @@ def to_create_weibo(content, user, content_type, imgs_id, video_id, super_weibo_
             return HttpResponse(json.dumps({"status": "0"}))
         elif content_type == 2:
             if video_id:
-                logger.debug('微博类型为视频')
                 try:
                     video_db = Video.objects.get(video_id=video_id)
                 except:
@@ -194,7 +203,7 @@ def to_create_weibo(content, user, content_type, imgs_id, video_id, super_weibo_
                     WeiboToVideo(weibo=weibo, video=video_db).save()
                     weibo.save()
                     return HttpResponse("{\"status\":0}", status=200)
-            # 没有检测到上传的视频信息，更正微博类型为0，并保存微博
+            logger.debug('没有检测到上传的视频信息，更正微博类型为0，并保存微博')
             weibo.content_type = 0
             weibo.save()
             return HttpResponse(json.dumps({"status": "0", "info": "We didn't find any video, changed type to \"text\"."}))
@@ -202,6 +211,8 @@ def to_create_weibo(content, user, content_type, imgs_id, video_id, super_weibo_
             # 因默认为0，不做修改
             return HttpResponse("{\"status\":0}", status=200)
     except:
+        logger.error('未知错误')
+        logger.error(traceback.format_exc())
         return HttpResponse("{\"status\":6}", status=500)
 
 
@@ -224,7 +235,8 @@ def at_notice_catcher(sender, content, weibo_id):
             Notice(sender=sender, recipient=recipient, n_type=1, notice='%s在微博中提到了你' % sender.username, other=json.dumps({'weibo_id': weibo_id})).save()
             logger.debug('捕获到@内容：%s' % recipient.username)
         except:
-            pass
+            logger.warning('捕获@内容过程中出现异常')
+            logger.warning(traceback.format_exc())
 
 
 def process_notice_to_list(notice_db):
@@ -316,7 +328,6 @@ def search_user_lib(key_word: str):
         user_all = User.objects.all()
         return user_all, user_all.count()
     user_db = User.objects.filter(username__contains=key_word).exclude(is_active=False)
-    logger.debug('写入缓存')
     cache.set('search_user_' + key_word, user_db, 30)
     return user_db, user_db.count()
 
@@ -335,12 +346,9 @@ def process_user_to_list(user_db):
 def create_thumbnail(img_db):
     try:
         im = Image.open(img_db.image.path)
-        logger.debug('获取到的image对象')
         im.thumbnail((480, 480))
-        logger.debug('生成缩略')
         re_name = re.match(r'(.+)(\.\w+)$', img_db.image.name)
-        logger.debug('尝试把缩略图保存到:'+'media/'+img_db.image.path[:-len(img_db.image.path)] + re_name.group(1) + '_tb_480' + re_name.group(2))
         im.save('media/'+img_db.image.path[:-len(img_db.image.path)] + re_name.group(1) + '_tb_480' + re_name.group(2))
-        logger.debug('缩略图已保存到:'+str('media/'+img_db.image.path[:-len(img_db.image.path)] + re_name.group(1) + '_tb_480' + re_name.group(2)))
     except:
-        logger.error("生成缩略图失败")
+        logger.error("生成缩略图失败：%s" % img_db.image.path)
+        logger.error(traceback.format_exc())

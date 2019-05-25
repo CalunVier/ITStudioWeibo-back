@@ -13,12 +13,18 @@ class Images(models.Model):
     image = models.ImageField(upload_to='upload/image/%Y/%m')
     upload_time = models.DateTimeField(auto_now=True, verbose_name='上传时间')
 
+    def __str__(self):
+        return self.image.url
+
 
 # 视频表
 class Video(models.Model):
     video_id = models.AutoField(primary_key=True, unique=True, auto_created=True, verbose_name="VedioID")
     video = models.FileField(upload_to='upload/video/%Y/%m', verbose_name=u'视频')
     upload_time = models.DateTimeField(auto_now=True, verbose_name='上传时间')
+
+    def __str__(self):
+        return self.video.url
 
 
 # 微博信息表
