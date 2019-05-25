@@ -10,6 +10,7 @@ from weibo.weibo_lib import weibo_list_process_to_dict
 from .account_lib import check_user_id_verify, check_password_verify, set_login_cookie, check_email_verify, to_register, \
     check_logged, delete_login_cookie
 from .models import UserWeiboInfo, User
+import traceback
 
 logger = logging.getLogger('my_logger.account.view')
 status_str = '{"status": %d}'
@@ -708,6 +709,8 @@ def get_gallery(request):
         else:
             return HttpResponse(status=404)
     except:
+        logger.error(traceback.format_exc())
+        logger.error('未知错误')
         return HttpResponse(status_str % 6, status=500)
 
 
