@@ -243,7 +243,7 @@ def process_notice_to_list(notice_db):
     response_list = []
     for n in notice_db:
         if n.n_type == 1:
-            response_list.append({
+            notice_item = {
                 'type': 1,
                 'notice_id': n.id,
                 'content': n.notice,
@@ -251,9 +251,9 @@ def process_notice_to_list(notice_db):
                 'time': n.time.timestamp(),
                 'weibo_id': json.loads(n.other).get('weibo_id', ''),
                 'sender_id': n.sender.username,
-            })
+            }
         elif n.n_type == 3:
-            response_list.append({
+            notice_item = {
                 'type': 3,
                 'notice_id': n.id,
                 'content': n.notice,
@@ -261,9 +261,9 @@ def process_notice_to_list(notice_db):
                 'time': n.time.timestamp(),
                 'sender_id': n.sender.username,
                 'weibo_id': json.loads(n.other).get('weibo_id', ''),
-            })
+            }
         elif n.n_type == 4:
-            response_list.append({
+            notice_item = {
                 'type': 4,
                 'notice_id': n.id,
                 'content': n.notice,
@@ -271,17 +271,18 @@ def process_notice_to_list(notice_db):
                 'time': n.time.timestamp(),
                 'sender_id': n.sender.username,
                 'weibo_id': json.loads(n.other).get('weibo_id', ''),
-            })
+            }
+        try:
+            weibo = WeiboItem.objects.get(id=response_list['weibo_id'])
+            assert weibo.is_active
+        except:
+            weibo = None
+        if weibo is not None:
+            notice_item['weibo_content'] = weibo.content
         else:
-            response_list.append({
-                'type': n.n_type,
-                'notice_id': n.id,
-                'content': n.notice,
-                'read': n.read,
-                'time': n.time.timestamp(),
-                'sender_id': n.sender.username,
-                'other': n.other
-            })
+            notice_item['weibo_content'] = weibo
+        notice_item['sender_head'] = n.sender.head.url
+        response_list.append(notice_item)
     return response_list
 
 
