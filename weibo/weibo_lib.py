@@ -223,6 +223,7 @@ def create_weibo_comment(user, weibo, content):
     # notice处理
     at_notice_catcher(user, content, weibo.id)
     Notice(sender=user, recipient=weibo.author, n_type=3, content='用户%s评论了你的微博' % weibo.author.username, other=json.dumps({'weibo_id': weibo.id})).save()
+    logger.debug('已保存notice')
     return comment
 
 

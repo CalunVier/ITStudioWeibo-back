@@ -699,6 +699,7 @@ def get_gallery(request):
             if not time or not (0 < int(time.group(2)) < 13 and 1970 < int(time.group(1)) < 2020):
                 logger.debug("错误的日期")
                 return HttpResponse(status_str % 3, status=406)
+            logger.debug('将尝试获取'+'%s-%s-1' % (time.group(1), time.group(2))+'%s-%d-1' % (time.group(1), int(time.group(2))+1)+'之间的图片')
             gallery = user.user_info.gallery.filter(upload_time__gte='%s-%s-1' % (time.group(1), time.group(2)), upload_time__lt='%s-%d-1' % (time.group(1), int(time.group(2))+1))
             gallery = page_of_queryset(gallery, page, num)
             response_list = []
