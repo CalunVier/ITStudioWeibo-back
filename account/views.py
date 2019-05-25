@@ -363,15 +363,18 @@ def new_follow(request):
             except:
                 return HttpResponse("{\"status\":1}", status=404)
 
-            if follow_user in user.user_info.following.all():
+            f_user = user.user_info.following.filter(username=follow_id)
+            if f_user:
                 user.user_info.following.remove(follow_user)
                 user.user_info.follow_num -= 1
                 user.user_info.save()
+                f_status = False
             else:
                 user.user_info.following.add(follow_user)
                 user.user_info.follow_num += 1
                 user.user_info.save()
-            return HttpResponse("{\"status\":0}")
+                f_status = True
+            return HttpResponse(json.dumps({'following': f_status, 'status':0}))
 
         else:
             return HttpResponse(status=404)

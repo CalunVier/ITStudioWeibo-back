@@ -40,6 +40,7 @@ def weibo_db_to_dict(request, item):
         'is_forward': False,
         'following': False,
         'is_like': False,
+        'collected': False,
     }
 
     # 处理转发情况
@@ -76,6 +77,7 @@ def weibo_db_to_dict(request, item):
                 end_super_weibo.save()
         item_data['super'] = super_weibo_dict
 
+    # 处理登陆后的各种状态
     user = check_logged(request)
     if user:
         # 处理点赞情况
@@ -91,6 +93,10 @@ def weibo_db_to_dict(request, item):
             check_follow = user.user_info.following.filter(username=item_data['author_id'])
             if check_follow:
                 item_data['following'] = True
+
+        # 检查是否收藏
+        if user.user_info.collect_weibo.filter(id=item.id):
+            item_data['collected']=True
 
     # 处理视频和图片
     if item.content_type == 1:  # img

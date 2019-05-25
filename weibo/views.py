@@ -641,7 +641,7 @@ def upload_video(request):
         return HttpResponse("{\"status\":6}", status=500)
 
 
-# 收藏微博
+# 收藏微博&更改收藏微博的状态
 def collect_weibo(request):
     """
     返回及状态说明
@@ -654,19 +654,26 @@ def collect_weibo(request):
     """
     try:
         if request.method == 'POST':
-            weibo_id = request.POST.get('weibo_id', '')
             try:
-                weibo_id = int(weibo_id)
-                weibo = WeiboItem.objects.get(id=weibo_id)
+                weibo = WeiboItem.objects.get(id=int(request.POST.get('weibo_id', '')))
                 assert weibo.is_active
             except:
                 return HttpResponse("{\"status\":2}", status=404)
 
             user = check_logged(request)
             if not user:
+                logger.debug('未登录')
                 return HttpResponse("{\"status\":4}", status=401)
-            user.user_info.collect_weibo.add(weibo)
-            return HttpResponse("{\"status\":0}")
+            c_weibo_q = user.user_info.collect_weibo.filter(id=weibo.id)
+            if c_weibo_q:
+                # 已收藏，删除
+                user.user_info.collect_weibo.remove(weibo)
+                c_status = False
+            else:
+                # 未收藏，添加到收藏
+                user.user_info.collect_weibo.add(weibo)
+                c_status = True
+            return HttpResponse(json.dumps({'collected': c_status, 'status': 0}))
         else:
             return HttpResponse(status=404)
     except:
