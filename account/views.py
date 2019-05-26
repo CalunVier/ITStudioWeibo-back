@@ -377,14 +377,14 @@ def new_follow(request):
                 user.user_info.following.remove(follow_user)
                 user.user_info.follow_num -= 1
                 follow_user.user_info.fans_num -= 1
-                follow_user.save()
+                follow_user.user_info.save()
                 user.user_info.save()
                 f_status = False
             else:
                 user.user_info.following.add(follow_user)
                 user.user_info.follow_num += 1
                 follow_user.user_info.fans_num += 1
-                follow_user.save()
+                follow_user.user_info.save()
                 user.user_info.save()
                 f_status = True
             return HttpResponse(json.dumps({'following': f_status, 'status':0}))
