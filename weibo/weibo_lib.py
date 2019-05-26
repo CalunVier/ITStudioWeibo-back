@@ -273,7 +273,7 @@ def process_notice_to_list(notice_db):
                 'weibo_id': json.loads(n.other).get('weibo_id', ''),
             }
         try:
-            weibo = WeiboItem.objects.get(id=response_list['weibo_id'])
+            weibo = WeiboItem.objects.get(id=notice_item['weibo_id'])
             assert weibo.is_active
         except:
             weibo = None
