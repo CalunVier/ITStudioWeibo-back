@@ -59,6 +59,7 @@ def set_login_cookie(request, response: HttpResponse, user: User):
         response.set_cookie('username', json.dumps(user.username))
         logger.debug('向cookie中写入user.username')
         logger.info('登陆成功')
+        return response
     except Exception:
         logger.error('登陆失败')
 

@@ -340,7 +340,7 @@ def change_username(request):
         if not User.objects.filter(username=username):
             user.username = username
             user.save()
-            return HttpResponse("{\"status\":0}")
+            return set_login_cookie(request, HttpResponse("{\"status\":0}"), user)
         else:
             logger.info('用户名重复')
             return HttpResponse(status_str % 5, status=403)
